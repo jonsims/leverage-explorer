@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: leverage-explorer
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: ADMIN_PIN
+        value: 1234
+      - key: PORT
+        value: 10000
