@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Leverage Point Explorer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #333; min-height: 100vh; }
+
+  .header { background: #2d6a4f; color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .phase-label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+  .waiting-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 32px; text-align: center; }
+  .waiting-screen h2 { font-size: 24px; color: #2d6a4f; margin-bottom: 12px; }
+  .waiting-screen p { font-size: 16px; color: #666; }
+
+  /* Classification phase */
+  .classify-container { padding: 12px; }
+  .progress-bar { background: #ddd; border-radius: 8px; height: 8px; margin-bottom: 16px; overflow: hidden; }
+  .progress-fill { background: #2d6a4f; height: 100%; transition: width 0.3s; border-radius: 8px; }
+  .progress-text { font-size: 13px; color: #666; margin-bottom: 8px; text-align: center; }
+
+  .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card .domain-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+  .card .domain-tag.food { background: #d4edda; color: #155724; }
+  .card .domain-tag.data { background: #cce5ff; color: #004085; }
+  .card .intervention-text { font-size: 15px; line-height: 1.4; margin-bottom: 12px; }
+
+  .realm-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .realm-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 10px 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .realm-btn:active { transform: scale(0.97); }
+  .realm-btn.selected { color: white; border-color: transparent; }
+  .realm-btn[data-realm="Parameters"] { color: #0077b6; }
+  .realm-btn[data-realm="Parameters"].selected { background: #0077b6; }
+  .realm-btn[data-realm="Feedbacks"] { color: #e85d04; }
+  .realm-btn[data-realm="Feedbacks"].selected { background: #e85d04; }
+  .realm-btn[data-realm="Design"] { color: #7b2cbf; }
+  .realm-btn[data-realm="Design"].selected { background: #7b2cbf; }
+  .realm-btn[data-realm="Intent"] { color: #2d6a4f; }
+  .realm-btn[data-realm="Intent"].selected { background: #2d6a4f; }
+
+  .card.classified { opacity: 0.6; }
+  .card.classified .intervention-text::after { content: ' ✓'; color: #2d6a4f; font-weight: bold; }
+
+  /* Chains phase */
+  .chains-container { padding: 12px; }
+  .chain-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; }
+  .chain-card h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 4px; }
+  .chain-card p { font-size: 13px; color: #666; }
+  .chain-card .direction { font-size: 12px; color: #999; margin-top: 4px; }
+
+  .chain-viewer { padding: 12px; }
+  .chain-viewer .back-btn { background: none; border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; margin-bottom: 12px; }
+  .chain-viewer h2 { font-size: 20px; color: #2d6a4f; margin-bottom: 4px; }
+  .chain-viewer .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+  .step { background: white; border-radius: 12px; padding: 16px; margin-bottom: 8px; border-left: 4px solid #ccc; }
+  .step .realm-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; color: white; }
+  .step .realm-badge.Parameters { background: #0077b6; }
+  .step .realm-badge.Feedbacks { background: #e85d04; }
+  .step .realm-badge.Design { background: #7b2cbf; }
+  .step .realm-badge.Intent { background: #2d6a4f; }
+  .step .step-text { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .step .step-detail { font-size: 13px; color: #666; line-height: 1.4; }
+  .step-arrow { text-align: center; font-size: 20px; color: #999; margin: 4px 0; }
+
+  .step.Parameters { border-left-color: #0077b6; }
+  .step.Feedbacks { border-left-color: #e85d04; }
+  .step.Design { border-left-color: #7b2cbf; }
+  .step.Intent { border-left-color: #2d6a4f; }
+
+  /* Chain submission */
+  .submit-section { background: white; border-radius: 12px; padding: 16px; margin-top: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .submit-section h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 8px; }
+  .submit-section p { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .submit-section input, .submit-section textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; }
+  .submit-section input { margin-bottom: 8px; }
+  .submit-section textarea { min-height: 80px; resize: vertical; margin-bottom: 8px; }
+  .submit-btn { width: 100%; background: #2d6a4f; color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .submit-btn:disabled { background: #999; }
+  .submit-btn:active { opacity: 0.9; }
+  .submitted-msg { text-align: center; color: #2d6a4f; font-weight: 600; padding: 12px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Leverage Point Explorer</h1>
+  <div class="phase-label" id="phaseLabel">Waiting for instructor...</div>
+</div>
+
+<div id="waitingScreen" class="waiting-screen">
+  <h2>Stand By</h2>
+  <p>The instructor will activate the next phase shortly.</p>
+</div>
+
+<div id="classifyScreen" class="classify-container hidden">
+  <div class="progress-text" id="progressText">0 of 12 classified</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="interventionCards"></div>
+</div>
+
+<div id="chainsScreen" class="chains-container hidden">
+  <div id="chainList"></div>
+  <div id="chainViewer" class="chain-viewer hidden"></div>
+  <div id="submitSection" class="submit-section">
+    <h3>Your Team's Chain</h3>
+    <p>Now find a similar chain in your product's Distribution & Storage stage — where one intervention could unlock another at a different depth.</p>
+    <input type="text" id="teamNameInput" placeholder="Team name (e.g., Produce, AI, EV...)" maxlength="50">
+    <textarea id="chainTextInput" placeholder="Describe your chain: what shallow intervention could unlock something deeper?" maxlength="1000"></textarea>
+    <button class="submit-btn" id="submitChainBtn" onclick="submitChain()">Submit Your Chain</button>
+    <div id="submittedMsg" class="submitted-msg hidden">Submitted! Your instructor can see your response.</div>
+  </div>
+</div>
+
+<div id="discussScreen" class="waiting-screen hidden">
+  <h2>Discussion</h2>
+  <p>Look up at the screen — we're reviewing responses together.</p>
+</div>
+
+<script>
+const VISITOR_ID = 'v_' + Math.random().toString(36).slice(2, 10);
+let interventions = [];
+let chains = [];
+let myClassifications = {};
+let currentPhase = 'waiting';
+let chainSubmitted = false;
+
+async function init() {
+  const [iRes, cRes] = await Promise.all([
+    fetch('/api/interventions').then(r => r.json()),
+    fetch('/api/chains').then(r => r.json()),
+  ]);
+  interventions = iRes;
+  chains = cRes;
+  renderClassifyCards();
+  renderChainList();
+  poll();
+}
+
+function renderClassifyCards() {
+  const container = document.getElementById('interventionCards');
+  container.innerHTML = interventions.map(i => `
+    <div class="card" id="card-${i.id}">
+      <span class="domain-tag ${i.domain}">${i.domain === 'food' ? 'Food Cold Chain' : 'Data / Electronics'}</span>
+      <div class="intervention-text">${i.text}</div>
+      <div class="realm-buttons">
+        ${['Parameters', 'Feedbacks', 'Design', 'Intent'].map(r => `
+          <button class="realm-btn" data-realm="${r}" onclick="classify(${i.id}, '${r}')">${r}</button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderChainList() {
+  const container = document.getElementById('chainList');
+  container.innerHTML = chains.map(c => `
+    <div class="chain-card" onclick="viewChain('${c.id}')">
+      <h3>${c.title}</h3>
+      <p>${c.subtitle}</p>
+    </div>
+  `).join('');
+}
+
+function viewChain(id) {
+  const chain = chains.find(c => c.id === id);
+  if (!chain) return;
+  document.getElementById('chainList').classList.add('hidden');
+  const viewer = document.getElementById('chainViewer');
+  viewer.classList.remove('hidden');
+
+  let html = `<button class="back-btn" onclick="backToChainList()">← Back to all chains</button>`;
+  html += `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
+
+  chain.steps.forEach((step, i) => {
+    if (i > 0) html += `<div class="step-arrow">↓</div>`;
+    html += `
+      <div class="step ${step.realm}">
+        <span class="realm-badge ${step.realm}">${step.realm}</span>
+        <div class="step-text">${step.text}</div>
+        <div class="step-detail">${step.detail}</div>
+      </div>
+    `;
+  });
+  viewer.innerHTML = html;
+}
+
+function backToChainList() {
+  document.getElementById('chainList').classList.remove('hidden');
+  document.getElementById('chainViewer').classList.add('hidden');
+}
+
+async function classify(interventionId, realm) {
+  myClassifications[interventionId] = realm;
+
+  // Update UI
+  const card = document.getElementById(`card-${interventionId}`);
+  card.querySelectorAll('.realm-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.realm === realm);
+  });
+  card.classList.add('classified');
+
+  // Update progress
+  const done = Object.keys(myClassifications).length;
+  document.getElementById('progressText').textContent = `${done} of ${interventions.length} classified`;
+  document.getElementById('progressFill').style.width = `${(done / interventions.length) * 100}%`;
+
+  // Send to server
+  try {
+    await fetch('/api/classify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorId: VISITOR_ID, interventionId, realm }),
+    });
+  } catch (e) { /* silent fail on network issues */ }
+}
+
+async function submitChain() {
+  const text = document.getElementById('chainTextInput').value.trim();
+  const teamName = document.getElementById('teamNameInput').value.trim();
+  if (!text) return;
+
+  document.getElementById('submitChainBtn').disabled = true;
+  try {
+    await fetch('/api/chain-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorId: VISITOR_ID, teamName, text }),
+    });
+    chainSubmitted = true;
+    document.getElementById('submitChainBtn').classList.add('hidden');
+    document.getElementById('chainTextInput').classList.add('hidden');
+    document.getElementById('teamNameInput').classList.add('hidden');
+    document.getElementById('submittedMsg').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('submitChainBtn').disabled = false;
+  }
+}
+
+function showPhase(phase) {
+  currentPhase = phase;
+  document.getElementById('waitingScreen').classList.toggle('hidden', phase !== 'waiting');
+  document.getElementById('classifyScreen').classList.toggle('hidden', phase !== 'classify');
+  document.getElementById('chainsScreen').classList.toggle('hidden', phase !== 'chains');
+  document.getElementById('discussScreen').classList.toggle('hidden', phase !== 'discuss');
+
+  const labels = { waiting: 'Waiting for instructor...', classify: 'Phase 1: Classify Interventions', chains: 'Phase 2: Chains of Leverage', discuss: 'Discussion' };
+  document.getElementById('phaseLabel').textContent = labels[phase] || '';
+}
+
+async function poll() {
+  try {
+    const state = await fetch('/api/state').then(r => r.json());
+    if (state.phase !== currentPhase) showPhase(state.phase);
+  } catch (e) { /* retry next cycle */ }
+  setTimeout(poll, 2000);
+}
+
+init();
+</script>
+</body>
+</html>
