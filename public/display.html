@@ -228,7 +228,6 @@ function showChain(chainId, rankAverages, rankCount, revealed) {
       <div class="step-content">
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
-        ${revealed && rankCount > 0 ? `<div class="rank-bar"><div class="rank-fill" style="width:${pct}%;"></div><span class="rank-label">avg #${avg}</span></div>` : ''}
       </div>
     </div>`;
   });
