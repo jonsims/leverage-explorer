@@ -222,7 +222,7 @@ function showChain(chainId, rankAverages, rankCount, revealed) {
     const avg = (rankAverages && rankAverages[i]) || 0;
     const pct = avg > 0 ? ((numSteps - avg + 1) / numSteps) * 100 : 0;
     const isTop = i === topStep && avg > 0 && revealed;
-    if (i > 0) html += revealed ? `<div class="chain-arrow">↓</div>` : `<div style="height:8px;"></div>`;
+    if (i > 0) html += `<div style="height:8px;"></div>`;
     html += `<div class="chain-step ${revealed ? step.realm : ''} ${isTop ? 'top-ranked' : ''}">
       ${revealed ? `<span class="realm-badge ${step.realm}">${step.realm}</span>` : ''}
       <div class="step-content">
