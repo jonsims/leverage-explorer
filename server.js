@@ -85,6 +85,7 @@ let session = {
   phase: 'waiting',
   activeChain: null,
   classifications: {},
+  chainVotes: {},       // { visitorId: { chainId: stepIndex } }
   chainSubmissions: [],
   displayHighlight: null,
   qrSvg: null,
@@ -123,11 +124,28 @@ app.get('/api/state', (req, res) => {
     }
   }
 
+  // Compute chain vote totals for the active chain
+  const chainVoteTotals = {};
+  if (session.activeChain) {
+    const chain = CHAINS.find(c => c.id === session.activeChain);
+    if (chain) {
+      chain.steps.forEach((_, i) => { chainVoteTotals[i] = 0; });
+      for (const votes of Object.values(session.chainVotes)) {
+        const stepIdx = votes[session.activeChain];
+        if (stepIdx !== undefined && chainVoteTotals[stepIdx] !== undefined) {
+          chainVoteTotals[stepIdx]++;
+        }
+      }
+    }
+  }
+
   const response = {
     phase: session.phase,
     activeChain: session.activeChain,
     classificationTotals: totals,
     voterCount: Object.keys(session.classifications).length,
+    chainVoteTotals,
+    chainVoteCount: Object.values(session.chainVotes).filter(v => v[session.activeChain] !== undefined).length,
     chainSubmissions: session.chainSubmissions,
     displayHighlight: session.displayHighlight,
   };
@@ -176,6 +194,20 @@ app.post('/api/chain-submit', (req, res) => {
   res.json({ ok: true, index: session.chainSubmissions.length - 1 });
 });
 
+app.post('/api/chain-vote', (req, res) => {
+  const { visitorId, chainId, stepIndex } = req.body;
+  if (!visitorId || !chainId || stepIndex === undefined) {
+    return res.status(400).json({ error: 'Invalid vote' });
+  }
+  const chain = CHAINS.find(c => c.id === chainId);
+  if (!chain || stepIndex < 0 || stepIndex >= chain.steps.length) {
+    return res.status(400).json({ error: 'Invalid chain or step' });
+  }
+  if (!session.chainVotes[visitorId]) session.chainVotes[visitorId] = {};
+  session.chainVotes[visitorId][chainId] = stepIndex;
+  res.json({ ok: true });
+});
+
 // ─── Admin API ──────────────────────────────────────────────────────────────
 
 app.get('/api/admin/verify', requirePin, (req, res) => {
@@ -210,6 +242,7 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
     phase: 'waiting',
     activeChain: null,
     classifications: {},
+    chainVotes: {},
     chainSubmissions: [],
     displayHighlight: null,
     qrSvg: null,
@@ -290,6 +323,27 @@ app.post('/api/admin/load-dummy', requirePin, (req, res) => {
     text: ct.text,
     timestamp: new Date().toISOString(),
   }));
+
+  // Generate dummy chain votes — weighted so there's a clear "winner" but with spread
+  session.chainVotes = {};
+  const voteWeights = {
+    kennedy:    [5, 12, 15, 12],   // Design gets most votes
+    strawberry: [18, 10, 8, 8],    // Parameters (thermometers) gets most
+    ozone:      [6, 20, 18],       // Feedbacks (scientists) gets most
+    smoking:    [10, 22, 12],      // Design (bans) gets most
+  };
+  for (let i = 0; i < 44; i++) {
+    session.chainVotes[`dummy_${i}`] = {};
+    for (const chain of CHAINS) {
+      const weights = voteWeights[chain.id] || chain.steps.map(() => 1);
+      const total = weights.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      for (let s = 0; s < weights.length; s++) {
+        r -= weights[s];
+        if (r <= 0) { session.chainVotes[`dummy_${i}`][chain.id] = s; break; }
+      }
+    }
+  }
 
   res.json({ ok: true, voters: 44, submissions: session.chainSubmissions.length });
 });

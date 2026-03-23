@@ -109,6 +109,7 @@
       <div class="section">
         <h2>Chain Selector <span style="font-size:11px;color:#999;text-transform:none;letter-spacing:0;">(students see what you select)</span></h2>
         <div class="chain-select" id="chainButtons"></div>
+        <div id="chainVoteStats" style="margin-top:8px;font-size:12px;color:#666;"></div>
       </div>
     </div>
 
@@ -207,6 +208,17 @@ async function poll() {
     currentPhase = state.phase;
     document.getElementById('voterCount').textContent = state.voterCount;
     document.querySelectorAll('.chain-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.chain === state.activeChain));
+
+    // Show chain vote stats
+    const voteStats = document.getElementById('chainVoteStats');
+    if (state.activeChain && state.chainVoteCount > 0) {
+      const entries = Object.entries(state.chainVoteTotals || {}).map(([idx, count]) => `Step ${+idx + 1}: ${count}`).join(' · ');
+      voteStats.textContent = `Votes (${state.chainVoteCount} total): ${entries}`;
+    } else if (state.activeChain) {
+      voteStats.textContent = 'No votes yet.';
+    } else {
+      voteStats.textContent = '';
+    }
 
     if (state.chainSubmissions.length > 0) {
       document.getElementById('submissionsList').innerHTML = state.chainSubmissions.map((s, i) => `

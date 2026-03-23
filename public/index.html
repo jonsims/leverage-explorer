@@ -54,8 +54,12 @@
   .chains-container { padding: 12px; }
   .chain-viewer { padding: 0; }
   .chain-viewer h2 { font-size: 20px; color: #2d6a4f; margin-bottom: 4px; }
-  .chain-viewer .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
-  .step { background: white; border-radius: 12px; padding: 16px; margin-bottom: 8px; border-left: 4px solid #ccc; }
+  .chain-viewer .subtitle { font-size: 13px; color: #666; margin-bottom: 8px; }
+  .vote-prompt { background: #fff3cd; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; font-weight: 600; color: #856404; text-align: center; line-height: 1.3; }
+  .vote-prompt.voted { background: #d4edda; color: #155724; }
+  .step { background: white; border-radius: 12px; padding: 16px; margin-bottom: 8px; border-left: 4px solid #ccc; cursor: pointer; transition: all 0.2s; position: relative; }
+  .step:active { transform: scale(0.98); }
+  .step.vote-selected { box-shadow: 0 0 0 3px #2d6a4f; border-left-color: #2d6a4f !important; }
   .step .realm-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; color: white; }
   .step .realm-badge.Parameters { background: #0077b6; }
   .step .realm-badge.Feedbacks { background: #e85d04; }
@@ -136,7 +140,7 @@
 <!-- Chains (instructor-controlled) -->
 <div id="chainsScreen" class="chains-container hidden">
   <div id="chainViewer" class="chain-viewer"></div>
-  <div id="submitSection" class="submit-section">
+  <div id="chainSubmitSection" class="submit-section hidden">
     <h3>Your Team's Chain</h3>
     <p id="submitPrompt">Think about your team's product. Can you find a chain in its Distribution & Storage stage where one intervention could unlock another at a different level?</p>
     <input type="text" id="teamNameInput" placeholder="Team name (e.g., Produce, AI, EV...)" maxlength="50">
@@ -229,26 +233,54 @@ function updateProgress(domain) {
   if (done === items.length) document.getElementById(`${prefix}DoneMsg`).classList.remove('hidden');
 }
 
+let myChainVotes = JSON.parse(localStorage.getItem('lpe_chain_votes') || '{}');
+
 function renderChain(chainId) {
   const viewer = document.getElementById('chainViewer');
   if (!chainId) {
     viewer.innerHTML = '<div class="no-chain-msg">Waiting for the instructor to select a chain...</div>';
+    document.getElementById('chainSubmitSection').classList.add('hidden');
     return;
   }
   const chain = chains.find(c => c.id === chainId);
   if (!chain) { viewer.innerHTML = ''; return; }
 
+  const myVote = myChainVotes[chainId];
+  const hasVoted = myVote !== undefined;
+
   let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
+  html += `<div class="vote-prompt ${hasVoted ? 'voted' : ''}" id="votePrompt">${hasVoted ? 'Vote recorded! You can change it by tapping a different step.' : 'Tap the step you think is the HIGHEST leverage point for change:'}</div>`;
+
   chain.steps.forEach((step, i) => {
     if (i > 0) html += `<div class="step-arrow">↓</div>`;
     html += `
-      <div class="step ${step.realm}">
+      <div class="step ${step.realm} ${myVote === i ? 'vote-selected' : ''}" onclick="voteForStep('${chainId}', ${i})">
         <span class="realm-badge ${step.realm}">${step.realm}</span>
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
       </div>`;
   });
   viewer.innerHTML = html;
+
+  // Show submit section after voting
+  if (hasVoted) {
+    document.getElementById('chainSubmitSection').classList.remove('hidden');
+  }
+}
+
+async function voteForStep(chainId, stepIndex) {
+  myChainVotes[chainId] = stepIndex;
+  localStorage.setItem('lpe_chain_votes', JSON.stringify(myChainVotes));
+  renderChain(chainId);
+
+  try {
+    await fetch('/api/chain-vote', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorId: VISITOR_ID, chainId, stepIndex }),
+    });
+  } catch (e) {
+    document.getElementById('connWarning').style.display = 'block';
+  }
 }
 
 let classifyTimeout = null;
