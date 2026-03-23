@@ -73,10 +73,7 @@
   .step .step-text { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
   .step .step-detail { font-size: 13px; color: #666; line-height: 1.4; }
   .step-arrow { text-align: center; font-size: 20px; color: #999; margin: 4px 0; }
-  .step.Parameters { border-left-color: #0077b6; }
-  .step.Feedbacks { border-left-color: #e85d04; }
-  .step.Design { border-left-color: #7b2cbf; }
-  .step.Intent { border-left-color: #2d6a4f; }
+  .step { border-left-color: #999; }
 
   .no-chain-msg { text-align: center; padding: 40px; color: #999; font-size: 16px; }
 
@@ -246,9 +243,8 @@ function renderChain(chainId) {
     const isRanked = rankPos !== -1;
     if (i > 0) html += `<div class="step-arrow">↓</div>`;
     html += `
-      <div class="step ${step.realm} ${isRanked ? 'ranked' : ''}" onclick="rankStep('${chainId}', ${i})">
+      <div class="step ${isRanked ? 'ranked' : ''}" onclick="rankStep('${chainId}', ${i})">
         <div class="rank-number">${isRanked ? rankPos + 1 : ''}</div>
-        <span class="realm-badge ${step.realm}">${step.realm}</span>
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
       </div>`;
