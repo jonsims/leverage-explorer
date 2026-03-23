@@ -233,6 +233,8 @@ async function poll() {
           </div>
         </div>
       `).join('');
+    } else {
+      document.getElementById('submissionsList').innerHTML = '<p style="font-size:12px;color:#999;">No submissions yet.</p>';
     }
   } catch (e) {}
   setTimeout(poll, 2000);
