@@ -336,10 +336,14 @@ async function poll() {
     if (!res.ok) throw new Error();
     const state = await res.json();
     if (state.phase !== currentPhase) showPhase(state.phase);
-    // Update chain view when instructor changes selection
-    if (state.phase === 'chains' && state.activeChain !== currentChainId) {
-      currentChainId = state.activeChain;
-      renderChain(currentChainId);
+    // Update chain view when entering chains phase or when instructor changes selection
+    if (state.phase === 'chains') {
+      if (state.activeChain !== currentChainId || (!currentChainId && document.getElementById('chainViewer').innerHTML === '')) {
+        currentChainId = state.activeChain;
+        renderChain(currentChainId);
+      }
+    } else {
+      currentChainId = null; // Reset so re-entering chains triggers render
     }
     consecutiveErrors = 0;
     document.getElementById('connWarning').style.display = 'none';
