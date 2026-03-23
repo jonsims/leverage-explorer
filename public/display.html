@@ -15,8 +15,8 @@
   .waiting { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 80px); overflow: hidden; gap: 8px; }
   .waiting h2 { font-size: 3rem; color: #74c69d; margin: 0; }
   .waiting p { font-size: 1.5rem; opacity: 0.6; margin: 0; }
-  .qr-box { width: min(200px, 25vh); height: min(200px, 25vh); }
-  .qr-box svg { width: 100%; height: 100%; }
+  .qr-box { width: min(250px, 30vh); height: min(250px, 30vh); background: white; border-radius: 12px; padding: 12px; }
+  .qr-box svg { width: 100%; height: 100%; display: block; }
 
   /* Classification */
   .classify-display { padding: 0 40px 40px; }
@@ -25,6 +25,11 @@
 
   .intervention-row { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px; }
   .intervention-row .i-text { font-size: 0.85rem; line-height: 1.3; opacity: 0.9; min-height: 2.4em; }
+  .answer-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 4px; color: white; white-space: nowrap; flex-shrink: 0; }
+  .answer-badge.Parameters { background: #0077b6; }
+  .answer-badge.Feedbacks { background: #e85d04; }
+  .answer-badge.Design { background: #7b2cbf; }
+  .answer-badge.Intent { background: #2d6a4f; }
   .intervention-row .bars { display: flex; gap: 3px; height: 28px; border-radius: 6px; overflow: hidden; }
   .bar-segment { display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; transition: flex 0.5s ease; min-width: 0; }
   .bar-segment.Parameters { background: #0077b6; }
@@ -158,10 +163,21 @@ function buildGrid(domain, containerId) {
   const items = interventions.filter(i => i.domain === domain);
   document.getElementById(containerId).innerHTML = items.map(i => `
     <div class="intervention-row" id="disp-${i.id}">
-      <div class="i-text">${i.text}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div class="i-text">${i.text}</div>
+        <span class="answer-badge ${i.answer}" id="answer-${i.id}" style="display:none;">${i.answer}</span>
+      </div>
       <div class="bars" id="bars-${i.id}"></div>
     </div>
   `).join('');
+}
+
+function showAnswers(domain, revealed) {
+  const items = interventions.filter(i => i.domain === domain);
+  for (const i of items) {
+    const badge = document.getElementById(`answer-${i.id}`);
+    if (badge) badge.style.display = revealed ? 'inline-block' : 'none';
+  }
 }
 
 function updateBars(totals, domain) {
@@ -252,10 +268,12 @@ async function poll() {
 
     if (state.phase === 'classify-food') {
       updateBars(state.classificationTotals, 'food');
+      showAnswers('food', state.classifyFoodRevealed);
       document.getElementById('foodVoterCount').textContent = `${state.voterCount} participant${state.voterCount !== 1 ? 's' : ''}`;
     }
     if (state.phase === 'classify-data') {
       updateBars(state.classificationTotals, 'data');
+      showAnswers('data', state.classifyDataRevealed);
       document.getElementById('dataVoterCount').textContent = `${state.voterCount} participant${state.voterCount !== 1 ? 's' : ''}`;
     }
     if (state.phase === 'chains') {

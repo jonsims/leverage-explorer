@@ -94,6 +94,10 @@
           <button class="phase-btn" data-phase="chains" onclick="setPhase('chains')">Chains</button>
           <button class="phase-btn" data-phase="discuss" onclick="setPhase('discuss')">Discussion</button>
         </div>
+        <div style="margin-top:8px;display:flex;gap:6px;">
+          <button class="phase-btn" id="revealFoodBtn" onclick="toggleClassifyReveal('food')" style="font-size:11px;padding:4px 10px;">Reveal Food Answers</button>
+          <button class="phase-btn" id="revealDataBtn" onclick="toggleClassifyReveal('data')" style="font-size:11px;padding:4px 10px;">Reveal Data Answers</button>
+        </div>
       </div>
 
       <div class="section">
@@ -178,6 +182,7 @@ function loadChainButtons() {
 
 async function selectChain(id) { await adminFetch('/api/admin/active-chain', { method: 'POST', body: JSON.stringify({ chainId: id }) }); }
 async function toggleReveal() { await adminFetch('/api/admin/reveal-chain', { method: 'POST' }); }
+async function toggleClassifyReveal(domain) { await adminFetch('/api/admin/reveal-classify', { method: 'POST', body: JSON.stringify({ domain }) }); }
 async function highlightSubmission(index) { await adminFetch('/api/admin/highlight', { method: 'POST', body: JSON.stringify({ index }) }); }
 
 function autoGenerateQR() {
@@ -211,6 +216,14 @@ async function poll() {
     currentPhase = state.phase;
     document.getElementById('voterCount').textContent = state.voterCount;
     document.querySelectorAll('.chain-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.chain === state.activeChain));
+
+    // Update classify reveal buttons
+    const revealFoodBtn = document.getElementById('revealFoodBtn');
+    revealFoodBtn.textContent = state.classifyFoodRevealed ? 'Hide Food Answers' : 'Reveal Food Answers';
+    revealFoodBtn.classList.toggle('active', state.classifyFoodRevealed);
+    const revealDataBtn = document.getElementById('revealDataBtn');
+    revealDataBtn.textContent = state.classifyDataRevealed ? 'Hide Data Answers' : 'Reveal Data Answers';
+    revealDataBtn.classList.toggle('active', state.classifyDataRevealed);
 
     // Update reveal button
     const revealBtn = document.getElementById('revealBtn');

@@ -17,18 +17,18 @@ app.get('/display', (req, res) => res.sendFile(path.join(__dirname, 'public', 'd
 // ─── Data ───────────────────────────────────────────────────────────────────
 
 const INTERVENTIONS = [
-  { id: 1, text: "Install real-time temperature sensors in refrigerated trucks", domain: "food" },
-  { id: 2, text: "Train warehouse workers on cold chain protocols", domain: "food" },
-  { id: 3, text: "Require cold chain certification for all produce distributors", domain: "food" },
-  { id: 4, text: "Penalize distributors financially for temperature exceedances", domain: "food" },
-  { id: 5, text: "Redesign supply chains so produce travels less than 200 miles", domain: "food" },
-  { id: 6, text: "Change the success metric from 'cost per unit delivered' to 'percent arriving at peak quality'", domain: "food" },
-  { id: 7, text: "Install more energy-efficient cooling in data centers", domain: "data" },
-  { id: 8, text: "Require data centers to disclose water and energy consumption publicly", domain: "data" },
-  { id: 9, text: "Site new data centers only adjacent to verified renewable energy sources", domain: "data" },
-  { id: 10, text: "Give host communities a formal vote on data center siting decisions", domain: "data" },
-  { id: 11, text: "End local tax subsidies for data center construction", domain: "data" },
-  { id: 12, text: "Establish a global standard for measuring and reporting data center embodied carbon", domain: "data" },
+  { id: 1, text: "Install real-time temperature sensors in refrigerated trucks", domain: "food", answer: "Parameters" },
+  { id: 2, text: "Train warehouse workers on cold chain protocols", domain: "food", answer: "Feedbacks" },
+  { id: 3, text: "Require cold chain certification for all produce distributors", domain: "food", answer: "Design" },
+  { id: 4, text: "Penalize distributors financially for temperature exceedances", domain: "food", answer: "Design" },
+  { id: 5, text: "Redesign supply chains so produce travels less than 200 miles", domain: "food", answer: "Design" },
+  { id: 6, text: "Change the success metric from 'cost per unit delivered' to 'percent arriving at peak quality'", domain: "food", answer: "Intent" },
+  { id: 7, text: "Install more energy-efficient cooling in data centers", domain: "data", answer: "Parameters" },
+  { id: 8, text: "Require data centers to disclose water and energy consumption publicly", domain: "data", answer: "Feedbacks" },
+  { id: 9, text: "Site new data centers only adjacent to verified renewable energy sources", domain: "data", answer: "Design" },
+  { id: 10, text: "Give host communities a formal vote on data center siting decisions", domain: "data", answer: "Design" },
+  { id: 11, text: "End local tax subsidies for data center construction", domain: "data", answer: "Design" },
+  { id: 12, text: "Establish a global standard for measuring and reporting data center embodied carbon", domain: "data", answer: "Feedbacks" },
 ];
 
 const CHAINS = [
@@ -85,6 +85,8 @@ let session = {
   phase: 'waiting',
   activeChain: null,
   classifications: {},
+  classifyFoodRevealed: false,
+  classifyDataRevealed: false,
   chainRankings: {},    // { visitorId: { chainId: [stepIdx, stepIdx, ...] } } — index 0 = highest leverage
   chainRevealed: false,
   chainSubmissions: [],
@@ -152,6 +154,8 @@ app.get('/api/state', (req, res) => {
     activeChain: session.activeChain,
     classificationTotals: totals,
     voterCount: Object.keys(session.classifications).length,
+    classifyFoodRevealed: session.classifyFoodRevealed,
+    classifyDataRevealed: session.classifyDataRevealed,
     chainRankAverages,
     chainRankCount,
     chainRevealed: session.chainRevealed,
@@ -250,6 +254,13 @@ app.post('/api/admin/reveal-chain', requirePin, (req, res) => {
   res.json({ ok: true, revealed: session.chainRevealed });
 });
 
+app.post('/api/admin/reveal-classify', requirePin, (req, res) => {
+  const { domain } = req.body;
+  if (domain === 'food') { session.classifyFoodRevealed = !session.classifyFoodRevealed; res.json({ ok: true, revealed: session.classifyFoodRevealed }); }
+  else if (domain === 'data') { session.classifyDataRevealed = !session.classifyDataRevealed; res.json({ ok: true, revealed: session.classifyDataRevealed }); }
+  else { res.status(400).json({ error: 'Invalid domain' }); }
+});
+
 app.post('/api/admin/highlight', requirePin, (req, res) => {
   const { index } = req.body;
   session.displayHighlight = index !== undefined ? index : null;
@@ -263,6 +274,8 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
     phase: 'waiting',
     activeChain: null,
     classifications: {},
+    classifyFoodRevealed: false,
+    classifyDataRevealed: false,
     chainRankings: {},
     chainRevealed: false,
     chainSubmissions: [],
