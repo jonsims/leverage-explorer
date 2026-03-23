@@ -86,6 +86,7 @@ let session = {
   activeChain: null,
   classifications: {},
   chainRankings: {},    // { visitorId: { chainId: [stepIdx, stepIdx, ...] } } — index 0 = highest leverage
+  chainRevealed: false,
   chainSubmissions: [],
   displayHighlight: null,
   qrSvg: null,
@@ -153,6 +154,7 @@ app.get('/api/state', (req, res) => {
     voterCount: Object.keys(session.classifications).length,
     chainRankAverages,
     chainRankCount,
+    chainRevealed: session.chainRevealed,
     chainSubmissions: session.chainSubmissions,
     displayHighlight: session.displayHighlight,
   };
@@ -239,7 +241,13 @@ app.post('/api/admin/phase', requirePin, (req, res) => {
 app.post('/api/admin/active-chain', requirePin, (req, res) => {
   const { chainId } = req.body;
   session.activeChain = chainId;
+  session.chainRevealed = false; // Reset reveal when switching chains
   res.json({ ok: true, activeChain: chainId });
+});
+
+app.post('/api/admin/reveal-chain', requirePin, (req, res) => {
+  session.chainRevealed = !session.chainRevealed;
+  res.json({ ok: true, revealed: session.chainRevealed });
 });
 
 app.post('/api/admin/highlight', requirePin, (req, res) => {
@@ -256,6 +264,7 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
     activeChain: null,
     classifications: {},
     chainRankings: {},
+    chainRevealed: false,
     chainSubmissions: [],
     displayHighlight: null,
     qrSvg: null,

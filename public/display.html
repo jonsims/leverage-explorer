@@ -185,32 +185,33 @@ function updateBars(totals, domain) {
 
 let lastChainId = null;
 
-function showChain(chainId, rankAverages, rankCount) {
+function showChain(chainId, rankAverages, rankCount, revealed) {
   const el = document.getElementById('chainContent');
   if (!chainId) { el.innerHTML = '<div class="no-chain">Waiting for instructor to select a chain...</div>'; lastChainId = null; return; }
   const chain = chains.find(c => c.id === chainId);
   if (!chain) { el.innerHTML = ''; return; }
 
   const numSteps = chain.steps.length;
-  // Best (lowest) average rank = highest leverage. Bar width is inverted: lower avg = wider bar.
-  const bestAvg = Math.min(...Object.values(rankAverages || {}).filter(v => v > 0), numSteps);
   const topStep = Object.entries(rankAverages || {}).reduce((best, [idx, avg]) => (avg > 0 && avg < best.avg) ? { idx: +idx, avg } : best, { idx: -1, avg: numSteps + 1 }).idx;
 
   let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
-  if (rankCount > 0) html += `<div class="vote-header">Average leverage ranking — ${rankCount} response${rankCount !== 1 ? 's' : ''}</div>`;
+  if (!revealed && rankCount > 0) {
+    html += `<div class="vote-header">${rankCount} ranking${rankCount !== 1 ? 's' : ''} submitted</div>`;
+  } else if (revealed && rankCount > 0) {
+    html += `<div class="vote-header">Average leverage ranking — ${rankCount} response${rankCount !== 1 ? 's' : ''}</div>`;
+  }
   html += '<div class="chain-steps">';
   chain.steps.forEach((step, i) => {
     const avg = (rankAverages && rankAverages[i]) || 0;
-    // Invert: rank 1 (best) gets 100% bar, rank N gets small bar
     const pct = avg > 0 ? ((numSteps - avg + 1) / numSteps) * 100 : 0;
-    const isTop = i === topStep && avg > 0;
+    const isTop = i === topStep && avg > 0 && revealed;
     if (i > 0) html += `<div class="chain-arrow">↓</div>`;
-    html += `<div class="chain-step ${step.realm} ${isTop ? 'top-ranked' : ''}">
-      <span class="realm-badge ${step.realm}">${step.realm}</span>
+    html += `<div class="chain-step ${revealed ? step.realm : ''} ${isTop ? 'top-ranked' : ''}">
+      ${revealed ? `<span class="realm-badge ${step.realm}">${step.realm}</span>` : ''}
       <div class="step-content">
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
-        ${rankCount > 0 ? `<div class="rank-bar"><div class="rank-fill" style="width:${pct}%;"></div><span class="rank-label">avg #${avg}</span></div>` : ''}
+        ${revealed && rankCount > 0 ? `<div class="rank-bar"><div class="rank-fill" style="width:${pct}%;"></div><span class="rank-label">avg #${avg}</span></div>` : ''}
       </div>
     </div>`;
   });
@@ -257,7 +258,7 @@ async function poll() {
       document.getElementById('dataVoterCount').textContent = `${state.voterCount} participant${state.voterCount !== 1 ? 's' : ''}`;
     }
     if (state.phase === 'chains') {
-      showChain(state.activeChain, state.chainRankAverages, state.chainRankCount);
+      showChain(state.activeChain, state.chainRankAverages, state.chainRankCount, state.chainRevealed);
       if (state.displayHighlight !== null && state.chainSubmissions[state.displayHighlight]) {
         showHighlight(state.chainSubmissions[state.displayHighlight]);
       } else { showHighlight(null); }

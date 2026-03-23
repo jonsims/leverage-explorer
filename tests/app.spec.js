@@ -393,7 +393,7 @@ test.describe('Chain ranking', () => {
     expect(res.status).toBe(400);
   });
 
-  test('rankings show on display as average rank bars', async ({ page }) => {
+  test('rankings hidden until reveal, then show on display', async ({ page }) => {
     await adminFetch('/api/admin/phase', { method: 'POST', body: JSON.stringify({ phase: 'chains' }) });
     await adminFetch('/api/admin/active-chain', { method: 'POST', body: JSON.stringify({ chainId: 'kennedy' }) });
 
@@ -409,11 +409,18 @@ test.describe('Chain ranking', () => {
     await page.goto('/display');
     await page.waitForTimeout(2500);
 
-    // Should show rank bars
-    const rankBars = page.locator('.rank-bar');
-    await expect(rankBars).toHaveCount(4);
+    // Before reveal: no rank bars, no realm badges, but shows count
+    await expect(page.locator('.rank-bar')).toHaveCount(0);
+    await expect(page.locator('.realm-badge')).toHaveCount(0);
+    await expect(page.locator('.vote-header')).toContainText('10 rankings submitted');
 
-    // Should show response count
+    // Reveal
+    await adminFetch('/api/admin/reveal-chain', { method: 'POST' });
+    await page.waitForTimeout(2500);
+
+    // After reveal: rank bars and realm badges visible
+    await expect(page.locator('.rank-bar')).toHaveCount(4);
+    await expect(page.locator('.realm-badge')).toHaveCount(4);
     await expect(page.locator('.vote-header')).toContainText('10 responses');
   });
 

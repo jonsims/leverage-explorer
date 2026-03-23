@@ -110,6 +110,7 @@
       <div class="section">
         <h2>Chain Selector <span style="font-size:11px;color:#999;text-transform:none;letter-spacing:0;">(students see what you select)</span></h2>
         <div class="chain-select" id="chainButtons"></div>
+        <button class="phase-btn" id="revealBtn" onclick="toggleReveal()" style="margin-top:8px;font-size:12px;padding:6px 14px;">Reveal Labels + Rankings</button>
         <div id="chainVoteStats" style="margin-top:8px;font-size:12px;color:#666;"></div>
       </div>
     </div>
@@ -176,6 +177,7 @@ function loadChainButtons() {
 }
 
 async function selectChain(id) { await adminFetch('/api/admin/active-chain', { method: 'POST', body: JSON.stringify({ chainId: id }) }); }
+async function toggleReveal() { await adminFetch('/api/admin/reveal-chain', { method: 'POST' }); }
 async function highlightSubmission(index) { await adminFetch('/api/admin/highlight', { method: 'POST', body: JSON.stringify({ index }) }); }
 
 function autoGenerateQR() {
@@ -209,6 +211,16 @@ async function poll() {
     currentPhase = state.phase;
     document.getElementById('voterCount').textContent = state.voterCount;
     document.querySelectorAll('.chain-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.chain === state.activeChain));
+
+    // Update reveal button
+    const revealBtn = document.getElementById('revealBtn');
+    if (state.chainRevealed) {
+      revealBtn.textContent = 'Hide Labels + Rankings';
+      revealBtn.classList.add('active');
+    } else {
+      revealBtn.textContent = 'Reveal Labels + Rankings';
+      revealBtn.classList.remove('active');
+    }
 
     // Show chain rank stats
     const voteStats = document.getElementById('chainVoteStats');
