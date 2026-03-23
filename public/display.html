@@ -64,6 +64,11 @@
   .chain-step .rank-fill { height: 8px; border-radius: 4px; background: #74c69d; transition: width 0.5s ease; min-width: 0; }
   .chain-step .rank-label { font-size: 0.85rem; font-weight: 700; color: #74c69d; white-space: nowrap; }
   .chain-step.top-ranked { background: rgba(116,198,157,0.15); border-left-width: 8px; }
+  .class-rank { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; margin-left: 8px; }
+  .class-rank.match { background: rgba(116,198,157,0.3); color: #74c69d; }
+  .class-rank.close { background: rgba(255,193,7,0.3); color: #ffc107; }
+  .class-rank.off { background: rgba(220,53,69,0.3); color: #ff6b6b; }
+  .correct-pos { font-size: 1.5rem; font-weight: 800; color: rgba(255,255,255,0.3); margin-right: 12px; flex-shrink: 0; width: 30px; text-align: center; }
   .chain-arrow { text-align: center; font-size: 1.5rem; opacity: 0.4; margin: 2px 0 2px 44px; }
   .no-chain { text-align: center; padding: 60px; opacity: 0.4; font-size: 1.5rem; }
   .vote-header { font-size: 1rem; opacity: 0.5; margin-bottom: 16px; }
@@ -200,6 +205,25 @@ function updateBars(totals, domain) {
 }
 
 let lastChainId = null;
+const displayShuffleCache = {};
+
+function getDisplayShuffle(chainId, numSteps) {
+  if (displayShuffleCache[chainId]) return displayShuffleCache[chainId];
+  const indices = Array.from({ length: numSteps }, (_, i) => i);
+  // Deterministic shuffle using chainId + 'display' as seed
+  const seedStr = chainId + '_display';
+  let s = 0;
+  for (let c = 0; c < seedStr.length; c++) s = s * 31 + seedStr.charCodeAt(c);
+  for (let i = indices.length - 1; i > 0; i--) {
+    s = (s * 16807 + 12345) % 2147483647;
+    const j = Math.abs(s) % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  // Ensure not in original order
+  if (indices.every((v, idx) => v === idx)) indices.push(indices.shift());
+  displayShuffleCache[chainId] = indices;
+  return indices;
+}
 
 function showChain(chainId, rankAverages, rankCount, revealed) {
   const el = document.getElementById('chainContent');
@@ -208,29 +232,45 @@ function showChain(chainId, rankAverages, rankCount, revealed) {
   if (!chain) { el.innerHTML = ''; return; }
 
   const numSteps = chain.steps.length;
-  const topStep = Object.entries(rankAverages || {}).reduce((best, [idx, avg]) => (avg > 0 && avg < best.avg) ? { idx: +idx, avg } : best, { idx: -1, avg: numSteps + 1 }).idx;
 
   let html = `<h2>${chain.title}</h2>`;
-  if (revealed) html += `<div class="subtitle">${chain.subtitle}</div>`;
-  if (!revealed && rankCount > 0) {
-    html += `<div class="vote-header">${rankCount} ranking${rankCount !== 1 ? 's' : ''} submitted</div>`;
-  } else if (revealed && rankCount > 0) {
-    html += `<div class="vote-header">Average leverage ranking — ${rankCount} response${rankCount !== 1 ? 's' : ''}</div>`;
+  if (revealed) {
+    html += `<div class="subtitle">${chain.subtitle}</div>`;
+    if (rankCount > 0) html += `<div class="vote-header">Correct order (shallow → deep) — class rankings from ${rankCount} response${rankCount !== 1 ? 's' : ''}</div>`;
+    // Revealed: show in correct order with class rank comparison
+    html += '<div class="chain-steps">';
+    chain.steps.forEach((step, i) => {
+      const correctPos = i + 1; // 1-based position in correct order
+      const classAvg = (rankAverages && rankAverages[i]) || 0;
+      const diff = classAvg > 0 ? Math.abs(classAvg - correctPos) : -1;
+      const rankClass = diff < 0 ? '' : diff < 0.5 ? 'match' : diff < 1.5 ? 'close' : 'off';
+      const rankLabel = classAvg > 0 ? `Class said: #${classAvg}` : '';
+      if (i > 0) html += `<div style="height:8px;"></div>`;
+      html += `<div class="chain-step ${step.realm}" style="display:flex;align-items:center;">
+        <div class="correct-pos">${correctPos}</div>
+        <span class="realm-badge ${step.realm}">${step.realm}</span>
+        <div class="step-content" style="flex:1;">
+          <div class="step-text">${step.text}${rankLabel ? ` <span class="class-rank ${rankClass}">${rankLabel}</span>` : ''}</div>
+          <div class="step-detail">${step.detail}</div>
+        </div>
+      </div>`;
+    });
+  } else {
+    // Not revealed: show in shuffled order, no labels
+    if (rankCount > 0) html += `<div class="vote-header">${rankCount} ranking${rankCount !== 1 ? 's' : ''} submitted</div>`;
+    const shuffled = getDisplayShuffle(chainId, numSteps);
+    html += '<div class="chain-steps">';
+    shuffled.forEach((origIdx, displayIdx) => {
+      const step = chain.steps[origIdx];
+      if (displayIdx > 0) html += `<div style="height:8px;"></div>`;
+      html += `<div class="chain-step">
+        <div class="step-content">
+          <div class="step-text">${step.text}</div>
+          <div class="step-detail">${step.detail}</div>
+        </div>
+      </div>`;
+    });
   }
-  html += '<div class="chain-steps">';
-  chain.steps.forEach((step, i) => {
-    const avg = (rankAverages && rankAverages[i]) || 0;
-    const pct = avg > 0 ? ((numSteps - avg + 1) / numSteps) * 100 : 0;
-    const isTop = i === topStep && avg > 0 && revealed;
-    if (i > 0) html += `<div style="height:8px;"></div>`;
-    html += `<div class="chain-step ${revealed ? step.realm : ''} ${isTop ? 'top-ranked' : ''}">
-      ${revealed ? `<span class="realm-badge ${step.realm}">${step.realm}</span>` : ''}
-      <div class="step-content">
-        <div class="step-text">${step.text}</div>
-        <div class="step-detail">${step.detail}</div>
-      </div>
-    </div>`;
-  });
   html += '</div>';
   el.innerHTML = html;
   lastChainId = chainId;
