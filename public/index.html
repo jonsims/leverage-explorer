@@ -103,8 +103,8 @@
   <div class="realm-legend">
     <div class="legend-title">Which type of change is this?</div>
     <div class="legend-grid">
-      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters</b> — physical/technical</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks</b> — info/monitoring</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters / Material</b> — physical/technical</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks / Processes</b> — info/monitoring</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div><span><b>Design</b> — rules/incentives</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div><span><b>Intent</b> — goals/paradigms</span></div>
     </div>
@@ -124,8 +124,8 @@
   <div class="realm-legend">
     <div class="legend-title">Which type of change is this?</div>
     <div class="legend-grid">
-      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters</b> — physical/technical</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks</b> — info/monitoring</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters / Material</b> — physical/technical</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks / Processes</b> — info/monitoring</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div><span><b>Design</b> — rules/incentives</span></div>
       <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div><span><b>Intent</b> — goals/paradigms</span></div>
     </div>
@@ -174,8 +174,9 @@ async function init() {
   startPolling();
 }
 
+const REALM_LABELS = { Parameters: 'Parameters / Material', Feedbacks: 'Feedbacks / Processes', Design: 'Design', Intent: 'Intent' };
 function realmButton(iId, realm, hint) {
-  return `<button class="realm-btn" data-realm="${realm}" onclick="classify(${iId}, '${realm}')">${realm}<span class="realm-hint">${hint}</span></button>`;
+  return `<button class="realm-btn" data-realm="${realm}" onclick="classify(${iId}, '${realm}')">${REALM_LABELS[realm]}<span class="realm-hint">${hint}</span></button>`;
 }
 
 function renderCards(domain, containerId) {

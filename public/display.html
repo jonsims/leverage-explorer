@@ -101,8 +101,8 @@
 <!-- Food classification -->
 <div id="classifyFoodDisplay" class="hidden">
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div> Parameters</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div> Feedbacks</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div> Parameters / Material</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div> Feedbacks / Processes</div>
     <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div> Design</div>
     <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div> Intent</div>
   </div>
@@ -116,8 +116,8 @@
 <!-- Data classification -->
 <div id="classifyDataDisplay" class="hidden">
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div> Parameters</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div> Feedbacks</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div> Parameters / Material</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div> Feedbacks / Processes</div>
     <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div> Design</div>
     <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div> Intent</div>
   </div>
@@ -170,7 +170,7 @@ function buildGrid(domain, containerId) {
     <div class="intervention-row" id="disp-${i.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div class="i-text">${i.text}</div>
-        <span class="answer-badge ${i.answer}" id="answer-${i.id}" style="display:none;">${i.answer}</span>
+        <span class="answer-badge ${i.answer}" id="answer-${i.id}" style="display:none;">${REALM_LABELS[i.answer] || i.answer}</span>
       </div>
       <div class="bars" id="bars-${i.id}"></div>
     </div>
@@ -204,6 +204,7 @@ function updateBars(totals, domain) {
   }
 }
 
+const REALM_LABELS = { Parameters: 'Parameters / Material', Feedbacks: 'Feedbacks / Processes', Design: 'Design', Intent: 'Intent' };
 let lastChainId = null;
 const displayShuffleCache = {};
 
@@ -248,7 +249,7 @@ function showChain(chainId, rankAverages, rankCount, revealed) {
       if (i > 0) html += `<div style="height:8px;"></div>`;
       html += `<div class="chain-step ${step.realm}" style="display:flex;align-items:center;">
         <div class="correct-pos">${correctPos}</div>
-        <span class="realm-badge ${step.realm}">${step.realm}</span>
+        <span class="realm-badge ${step.realm}">${REALM_LABELS[step.realm] || step.realm}</span>
         <div class="step-content" style="flex:1;">
           <div class="step-text">${step.text}${rankLabel ? ` <span class="class-rank ${rankClass}">${rankLabel}</span>` : ''}</div>
           <div class="step-detail">${step.detail}</div>
