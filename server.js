@@ -33,17 +33,6 @@ const INTERVENTIONS = [
 
 const CHAINS = [
   {
-    id: "kennedy",
-    title: "Kennedy Moon Landing",
-    subtitle: "Deep → Shallow: A moonshot cascades through every realm",
-    steps: [
-      { text: "Kennedy declares 'man on the moon before the decade is out'", realm: "Intent", detail: "A goal-level intervention — redefining what the nation's space program is FOR" },
-      { text: "NASA reorganizes entirely around the lunar mission", realm: "Design", detail: "Institutional restructuring — new divisions, new decision-making processes, new incentive structures" },
-      { text: "Mission control, telemetry, and real-time feedback systems created", realm: "Feedbacks", detail: "Entirely new information flows — real-time monitoring of every system parameter" },
-      { text: "Massive parameter innovation: rocket fuels, materials, computing", realm: "Parameters", detail: "The tangible stuff — thousands of engineering innovations driven by the deeper goal" },
-    ],
-  },
-  {
     id: "strawberry",
     title: "Strawberry Cold Chain",
     subtitle: "Shallow → Deep: A measurement tool triggers a chain to system goals",
@@ -84,6 +73,7 @@ const VALID_PHASES = ['waiting', 'classify-food', 'classify-data', 'chains', 'di
 let session = {
   phase: 'waiting',
   activeChain: null,
+  connectedVisitors: new Set(),
   classifications: {},
   classifyFoodRevealed: false,
   classifyDataRevealed: false,
@@ -115,6 +105,9 @@ app.get('/api/chains', (req, res) => {
 });
 
 app.get('/api/state', (req, res) => {
+  const vid = req.query.vid;
+  if (vid && !vid.startsWith('dummy')) session.connectedVisitors.add(vid);
+
   const totals = {};
   for (const intervention of INTERVENTIONS) {
     totals[intervention.id] = { Parameters: 0, Feedbacks: 0, Design: 0, Intent: 0 };
@@ -153,7 +146,7 @@ app.get('/api/state', (req, res) => {
     phase: session.phase,
     activeChain: session.activeChain,
     classificationTotals: totals,
-    voterCount: Object.keys(session.classifications).length,
+    voterCount: Math.max(session.connectedVisitors.size, Object.keys(session.classifications).length),
     classifyFoodRevealed: session.classifyFoodRevealed,
     classifyDataRevealed: session.classifyDataRevealed,
     chainRankAverages,
@@ -273,6 +266,7 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
   session = {
     phase: 'waiting',
     activeChain: null,
+    connectedVisitors: new Set(),
     classifications: {},
     classifyFoodRevealed: false,
     classifyDataRevealed: false,
@@ -363,7 +357,6 @@ app.post('/api/admin/load-dummy', requirePin, (req, res) => {
   // preferredOrder: step indices in likely rank order (most students will roughly follow this)
   session.chainRankings = {};
   const preferredOrders = {
-    kennedy:    [0, 1, 2, 3],  // Intent (Kennedy's declaration) tends to rank #1
     strawberry: [0, 1, 2, 3],  // Parameters (thermometers) tends to rank #1
     ozone:      [1, 0, 2],     // Design (Montreal Protocol) tends to rank #1
     smoking:    [1, 2, 0],     // Design (bans) tends to rank #1

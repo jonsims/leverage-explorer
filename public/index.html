@@ -353,7 +353,7 @@ function showPhase(phase) {
 
 async function poll() {
   try {
-    const res = await fetch('/api/state');
+    const res = await fetch(`/api/state?vid=${VISITOR_ID}`);
     if (!res.ok) throw new Error();
     const state = await res.json();
     if (state.phase !== currentPhase) showPhase(state.phase);
