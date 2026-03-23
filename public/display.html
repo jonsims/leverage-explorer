@@ -55,10 +55,10 @@
   .chain-step .step-content { flex: 1; }
   .chain-step .step-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; }
   .chain-step .step-detail { font-size: 0.9rem; opacity: 0.65; line-height: 1.4; }
-  .chain-step .vote-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .chain-step .vote-fill { height: 8px; border-radius: 4px; background: #74c69d; transition: width 0.5s ease; min-width: 0; }
-  .chain-step .vote-count { font-size: 0.85rem; font-weight: 700; color: #74c69d; white-space: nowrap; }
-  .chain-step.top-voted { background: rgba(116,198,157,0.15); border-left-width: 8px; }
+  .chain-step .rank-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .chain-step .rank-fill { height: 8px; border-radius: 4px; background: #74c69d; transition: width 0.5s ease; min-width: 0; }
+  .chain-step .rank-label { font-size: 0.85rem; font-weight: 700; color: #74c69d; white-space: nowrap; }
+  .chain-step.top-ranked { background: rgba(116,198,157,0.15); border-left-width: 8px; }
   .chain-arrow { text-align: center; font-size: 1.5rem; opacity: 0.4; margin: 2px 0 2px 44px; }
   .no-chain { text-align: center; padding: 60px; opacity: 0.4; font-size: 1.5rem; }
   .vote-header { font-size: 1rem; opacity: 0.5; margin-bottom: 16px; }
@@ -185,29 +185,32 @@ function updateBars(totals, domain) {
 
 let lastChainId = null;
 
-function showChain(chainId, voteTotals, voteCount) {
+function showChain(chainId, rankAverages, rankCount) {
   const el = document.getElementById('chainContent');
   if (!chainId) { el.innerHTML = '<div class="no-chain">Waiting for instructor to select a chain...</div>'; lastChainId = null; return; }
   const chain = chains.find(c => c.id === chainId);
   if (!chain) { el.innerHTML = ''; return; }
 
-  const maxVotes = Math.max(...Object.values(voteTotals || {}), 1);
-  const topStep = Object.entries(voteTotals || {}).reduce((best, [idx, count]) => count > best.count ? { idx: +idx, count } : best, { idx: -1, count: 0 }).idx;
+  const numSteps = chain.steps.length;
+  // Best (lowest) average rank = highest leverage. Bar width is inverted: lower avg = wider bar.
+  const bestAvg = Math.min(...Object.values(rankAverages || {}).filter(v => v > 0), numSteps);
+  const topStep = Object.entries(rankAverages || {}).reduce((best, [idx, avg]) => (avg > 0 && avg < best.avg) ? { idx: +idx, avg } : best, { idx: -1, avg: numSteps + 1 }).idx;
 
   let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
-  if (voteCount > 0) html += `<div class="vote-header">"Which step is the highest leverage point?" — ${voteCount} vote${voteCount !== 1 ? 's' : ''}</div>`;
+  if (rankCount > 0) html += `<div class="vote-header">Average leverage ranking — ${rankCount} response${rankCount !== 1 ? 's' : ''}</div>`;
   html += '<div class="chain-steps">';
   chain.steps.forEach((step, i) => {
-    const votes = (voteTotals && voteTotals[i]) || 0;
-    const pct = maxVotes > 0 ? (votes / maxVotes) * 100 : 0;
-    const isTop = i === topStep && votes > 0;
+    const avg = (rankAverages && rankAverages[i]) || 0;
+    // Invert: rank 1 (best) gets 100% bar, rank N gets small bar
+    const pct = avg > 0 ? ((numSteps - avg + 1) / numSteps) * 100 : 0;
+    const isTop = i === topStep && avg > 0;
     if (i > 0) html += `<div class="chain-arrow">↓</div>`;
-    html += `<div class="chain-step ${step.realm} ${isTop ? 'top-voted' : ''}">
+    html += `<div class="chain-step ${step.realm} ${isTop ? 'top-ranked' : ''}">
       <span class="realm-badge ${step.realm}">${step.realm}</span>
       <div class="step-content">
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
-        ${voteCount > 0 ? `<div class="vote-bar"><div class="vote-fill" style="width:${pct}%;"></div><span class="vote-count">${votes}</span></div>` : ''}
+        ${rankCount > 0 ? `<div class="rank-bar"><div class="rank-fill" style="width:${pct}%;"></div><span class="rank-label">avg #${avg}</span></div>` : ''}
       </div>
     </div>`;
   });
@@ -254,7 +257,7 @@ async function poll() {
       document.getElementById('dataVoterCount').textContent = `${state.voterCount} participant${state.voterCount !== 1 ? 's' : ''}`;
     }
     if (state.phase === 'chains') {
-      showChain(state.activeChain, state.chainVoteTotals, state.chainVoteCount);
+      showChain(state.activeChain, state.chainRankAverages, state.chainRankCount);
       if (state.displayHighlight !== null && state.chainSubmissions[state.displayHighlight]) {
         showHighlight(state.chainSubmissions[state.displayHighlight]);
       } else { showHighlight(null); }

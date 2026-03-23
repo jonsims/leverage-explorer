@@ -55,11 +55,16 @@
   .chain-viewer { padding: 0; }
   .chain-viewer h2 { font-size: 20px; color: #2d6a4f; margin-bottom: 4px; }
   .chain-viewer .subtitle { font-size: 13px; color: #666; margin-bottom: 8px; }
-  .vote-prompt { background: #fff3cd; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; font-weight: 600; color: #856404; text-align: center; line-height: 1.3; }
-  .vote-prompt.voted { background: #d4edda; color: #155724; }
+  .rank-prompt { background: #fff3cd; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; font-weight: 600; color: #856404; text-align: center; line-height: 1.3; }
+  .rank-prompt.done { background: #d4edda; color: #155724; }
+  .rank-actions { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+  .rank-actions button { border: 1px solid #ddd; background: white; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .rank-actions .reset-btn { color: #dc3545; border-color: #dc3545; }
   .step { background: white; border-radius: 12px; padding: 16px; margin-bottom: 8px; border-left: 4px solid #ccc; cursor: pointer; transition: all 0.2s; position: relative; }
   .step:active { transform: scale(0.98); }
-  .step.vote-selected { box-shadow: 0 0 0 3px #2d6a4f; border-left-color: #2d6a4f !important; }
+  .step.ranked { opacity: 0.55; }
+  .step.ranked .rank-number { display: flex; }
+  .rank-number { display: none; position: absolute; top: -8px; right: -4px; width: 32px; height: 32px; border-radius: 50%; background: #2d6a4f; color: white; font-size: 16px; font-weight: 800; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
   .step .realm-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; color: white; }
   .step .realm-badge.Parameters { background: #0077b6; }
   .step .realm-badge.Feedbacks { background: #e85d04; }
@@ -205,7 +210,7 @@ function updateProgress(domain) {
   if (done === items.length) document.getElementById(`${prefix}DoneMsg`).classList.remove('hidden');
 }
 
-let myChainVotes = JSON.parse(localStorage.getItem('lpe_chain_votes') || '{}');
+let myChainRankings = JSON.parse(localStorage.getItem('lpe_chain_rankings') || '{}');
 
 function renderChain(chainId) {
   const viewer = document.getElementById('chainViewer');
@@ -216,34 +221,71 @@ function renderChain(chainId) {
   const chain = chains.find(c => c.id === chainId);
   if (!chain) { viewer.innerHTML = ''; return; }
 
-  const myVote = myChainVotes[chainId];
-  const hasVoted = myVote !== undefined;
+  const ranking = myChainRankings[chainId] || [];
+  const isComplete = ranking.length === chain.steps.length;
+  const nextRank = ranking.length + 1;
+
+  let promptText, promptClass;
+  if (isComplete) {
+    promptText = 'Ranking submitted! Tap "Start Over" to change.';
+    promptClass = 'done';
+  } else if (ranking.length === 0) {
+    promptText = 'Rank these steps: tap the HIGHEST leverage point first, then second, etc.';
+    promptClass = '';
+  } else {
+    promptText = `Tap #${nextRank} — ${nextRank === chain.steps.length ? 'last one!' : (chain.steps.length - ranking.length) + ' remaining'}`;
+    promptClass = '';
+  }
 
   let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
-  html += `<div class="vote-prompt ${hasVoted ? 'voted' : ''}" id="votePrompt">${hasVoted ? 'Vote recorded! You can change it by tapping a different step.' : 'Tap the step you think is the HIGHEST leverage point for change:'}</div>`;
+  html += `<div class="rank-prompt ${promptClass}">${promptText}</div>`;
+  html += `<div class="rank-actions"><button class="reset-btn" onclick="resetRanking('${chainId}')">Start Over</button></div>`;
 
   chain.steps.forEach((step, i) => {
+    const rankPos = ranking.indexOf(i);
+    const isRanked = rankPos !== -1;
     if (i > 0) html += `<div class="step-arrow">↓</div>`;
     html += `
-      <div class="step ${step.realm} ${myVote === i ? 'vote-selected' : ''}" onclick="voteForStep('${chainId}', ${i})">
+      <div class="step ${step.realm} ${isRanked ? 'ranked' : ''}" onclick="rankStep('${chainId}', ${i})">
+        <div class="rank-number">${isRanked ? rankPos + 1 : ''}</div>
         <span class="realm-badge ${step.realm}">${step.realm}</span>
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
       </div>`;
   });
   viewer.innerHTML = html;
-
 }
 
-async function voteForStep(chainId, stepIndex) {
-  myChainVotes[chainId] = stepIndex;
-  localStorage.setItem('lpe_chain_votes', JSON.stringify(myChainVotes));
+function rankStep(chainId, stepIndex) {
+  const chain = chains.find(c => c.id === chainId);
+  if (!chain) return;
+  const ranking = myChainRankings[chainId] || [];
+  // Don't allow ranking if already complete or step already ranked
+  if (ranking.length >= chain.steps.length) return;
+  if (ranking.includes(stepIndex)) return;
+
+  ranking.push(stepIndex);
+  myChainRankings[chainId] = ranking;
+  localStorage.setItem('lpe_chain_rankings', JSON.stringify(myChainRankings));
   renderChain(chainId);
 
+  // Submit when complete
+  if (ranking.length === chain.steps.length) {
+    submitRanking(chainId, ranking);
+  }
+}
+
+function resetRanking(chainId) {
+  myChainRankings[chainId] = [];
+  localStorage.setItem('lpe_chain_rankings', JSON.stringify(myChainRankings));
+  renderChain(chainId);
+}
+
+async function submitRanking(chainId, ranking) {
   try {
-    await fetch('/api/chain-vote', {
+    await fetch('/api/chain-rank', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitorId: VISITOR_ID, chainId, stepIndex }),
+      body: JSON.stringify({ visitorId: VISITOR_ID, chainId, ranking }),
     });
   } catch (e) {
     document.getElementById('connWarning').style.display = 'block';

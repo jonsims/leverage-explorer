@@ -210,13 +210,13 @@ async function poll() {
     document.getElementById('voterCount').textContent = state.voterCount;
     document.querySelectorAll('.chain-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.chain === state.activeChain));
 
-    // Show chain vote stats
+    // Show chain rank stats
     const voteStats = document.getElementById('chainVoteStats');
-    if (state.activeChain && state.chainVoteCount > 0) {
-      const entries = Object.entries(state.chainVoteTotals || {}).map(([idx, count]) => `Step ${+idx + 1}: ${count}`).join(' · ');
-      voteStats.textContent = `Votes (${state.chainVoteCount} total): ${entries}`;
+    if (state.activeChain && state.chainRankCount > 0) {
+      const entries = Object.entries(state.chainRankAverages || {}).map(([idx, avg]) => `Step ${+idx + 1}: avg #${avg}`).join(' · ');
+      voteStats.textContent = `Rankings (${state.chainRankCount} responses): ${entries}`;
     } else if (state.activeChain) {
-      voteStats.textContent = 'No votes yet.';
+      voteStats.textContent = 'No rankings yet.';
     } else {
       voteStats.textContent = '';
     }

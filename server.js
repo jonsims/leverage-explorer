@@ -85,7 +85,7 @@ let session = {
   phase: 'waiting',
   activeChain: null,
   classifications: {},
-  chainVotes: {},       // { visitorId: { chainId: stepIndex } }
+  chainRankings: {},    // { visitorId: { chainId: [stepIdx, stepIdx, ...] } } — index 0 = highest leverage
   chainSubmissions: [],
   displayHighlight: null,
   qrSvg: null,
@@ -124,17 +124,24 @@ app.get('/api/state', (req, res) => {
     }
   }
 
-  // Compute chain vote totals for the active chain
-  const chainVoteTotals = {};
+  // Compute chain ranking averages for the active chain
+  const chainRankAverages = {};
+  let chainRankCount = 0;
   if (session.activeChain) {
     const chain = CHAINS.find(c => c.id === session.activeChain);
     if (chain) {
-      chain.steps.forEach((_, i) => { chainVoteTotals[i] = 0; });
-      for (const votes of Object.values(session.chainVotes)) {
-        const stepIdx = votes[session.activeChain];
-        if (stepIdx !== undefined && chainVoteTotals[stepIdx] !== undefined) {
-          chainVoteTotals[stepIdx]++;
-        }
+      const sums = {};
+      chain.steps.forEach((_, i) => { sums[i] = 0; });
+      for (const rankings of Object.values(session.chainRankings)) {
+        const ranking = rankings[session.activeChain];
+        if (!ranking || ranking.length !== chain.steps.length) continue;
+        chainRankCount++;
+        ranking.forEach((stepIdx, rank) => {
+          sums[stepIdx] = (sums[stepIdx] || 0) + (rank + 1); // rank 1-based
+        });
+      }
+      for (const [stepIdx, sum] of Object.entries(sums)) {
+        chainRankAverages[stepIdx] = chainRankCount > 0 ? +(sum / chainRankCount).toFixed(1) : 0;
       }
     }
   }
@@ -144,8 +151,8 @@ app.get('/api/state', (req, res) => {
     activeChain: session.activeChain,
     classificationTotals: totals,
     voterCount: Object.keys(session.classifications).length,
-    chainVoteTotals,
-    chainVoteCount: Object.values(session.chainVotes).filter(v => v[session.activeChain] !== undefined).length,
+    chainRankAverages,
+    chainRankCount,
     chainSubmissions: session.chainSubmissions,
     displayHighlight: session.displayHighlight,
   };
@@ -194,17 +201,23 @@ app.post('/api/chain-submit', (req, res) => {
   res.json({ ok: true, index: session.chainSubmissions.length - 1 });
 });
 
-app.post('/api/chain-vote', (req, res) => {
-  const { visitorId, chainId, stepIndex } = req.body;
-  if (!visitorId || !chainId || stepIndex === undefined) {
-    return res.status(400).json({ error: 'Invalid vote' });
+app.post('/api/chain-rank', (req, res) => {
+  const { visitorId, chainId, ranking } = req.body;
+  if (!visitorId || !chainId || !Array.isArray(ranking)) {
+    return res.status(400).json({ error: 'Invalid ranking' });
   }
   const chain = CHAINS.find(c => c.id === chainId);
-  if (!chain || stepIndex < 0 || stepIndex >= chain.steps.length) {
-    return res.status(400).json({ error: 'Invalid chain or step' });
+  if (!chain || ranking.length !== chain.steps.length) {
+    return res.status(400).json({ error: 'Ranking must include all steps' });
   }
-  if (!session.chainVotes[visitorId]) session.chainVotes[visitorId] = {};
-  session.chainVotes[visitorId][chainId] = stepIndex;
+  // Validate: each step index appears exactly once
+  const sorted = [...ranking].sort();
+  const expected = chain.steps.map((_, i) => i);
+  if (JSON.stringify(sorted) !== JSON.stringify(expected)) {
+    return res.status(400).json({ error: 'Invalid step indices in ranking' });
+  }
+  if (!session.chainRankings[visitorId]) session.chainRankings[visitorId] = {};
+  session.chainRankings[visitorId][chainId] = ranking;
   res.json({ ok: true });
 });
 
@@ -242,7 +255,7 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
     phase: 'waiting',
     activeChain: null,
     classifications: {},
-    chainVotes: {},
+    chainRankings: {},
     chainSubmissions: [],
     displayHighlight: null,
     qrSvg: null,
@@ -324,24 +337,28 @@ app.post('/api/admin/load-dummy', requirePin, (req, res) => {
     timestamp: new Date().toISOString(),
   }));
 
-  // Generate dummy chain votes — weighted so there's a clear "winner" but with spread
-  session.chainVotes = {};
-  const voteWeights = {
-    kennedy:    [5, 12, 15, 12],   // Design gets most votes
-    strawberry: [18, 10, 8, 8],    // Parameters (thermometers) gets most
-    ozone:      [6, 20, 18],       // Feedbacks (scientists) gets most
-    smoking:    [10, 22, 12],      // Design (bans) gets most
+  // Generate dummy chain rankings — biased so certain steps tend to rank higher
+  // preferredOrder: step indices in likely rank order (most students will roughly follow this)
+  session.chainRankings = {};
+  const preferredOrders = {
+    kennedy:    [0, 1, 2, 3],  // Intent (Kennedy's declaration) tends to rank #1
+    strawberry: [0, 1, 2, 3],  // Parameters (thermometers) tends to rank #1
+    ozone:      [1, 0, 2],     // Design (Montreal Protocol) tends to rank #1
+    smoking:    [1, 2, 0],     // Design (bans) tends to rank #1
   };
   for (let i = 0; i < 44; i++) {
-    session.chainVotes[`dummy_${i}`] = {};
+    session.chainRankings[`dummy_${i}`] = {};
     for (const chain of CHAINS) {
-      const weights = voteWeights[chain.id] || chain.steps.map(() => 1);
-      const total = weights.reduce((a, b) => a + b, 0);
-      let r = Math.random() * total;
-      for (let s = 0; s < weights.length; s++) {
-        r -= weights[s];
-        if (r <= 0) { session.chainVotes[`dummy_${i}`][chain.id] = s; break; }
+      const preferred = preferredOrders[chain.id] || chain.steps.map((_, idx) => idx);
+      // Start with preferred order, then randomly swap 0-2 pairs to create variance
+      const ranking = [...preferred];
+      const swaps = Math.floor(Math.random() * 3); // 0, 1, or 2 swaps
+      for (let s = 0; s < swaps; s++) {
+        const a = Math.floor(Math.random() * ranking.length);
+        const b = Math.floor(Math.random() * ranking.length);
+        [ranking[a], ranking[b]] = [ranking[b], ranking[a]];
       }
+      session.chainRankings[`dummy_${i}`][chain.id] = ranking;
     }
   }
 
