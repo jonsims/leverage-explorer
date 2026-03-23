@@ -92,6 +92,8 @@ let session = {
   classifications: {},     // { visitorId: { interventionId: realm } }
   chainSubmissions: [],     // [{ visitorId, teamName, text, timestamp }]
   displayHighlight: null,  // submission index to highlight on display
+  qrSvg: null,            // cached QR SVG for display/student pages
+  qrUrl: null,            // the student URL
 };
 
 // ─── Auth middleware ────────────────────────────────────────────────────────
@@ -132,6 +134,8 @@ app.get('/api/state', (req, res) => {
     voterCount: Object.keys(session.classifications).length,
     chainSubmissions: session.chainSubmissions,
     displayHighlight: session.displayHighlight,
+    qrSvg: session.qrSvg,
+    qrUrl: session.qrUrl,
   });
 });
 
@@ -193,6 +197,8 @@ app.post('/api/admin/reset', requirePin, (req, res) => {
     classifications: {},
     chainSubmissions: [],
     displayHighlight: null,
+    qrSvg: null,
+    qrUrl: null,
   };
   res.json({ ok: true });
 });
@@ -202,6 +208,8 @@ app.get('/api/admin/qr', requirePin, async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL required' });
   try {
     const svg = await QRCode.toString(url, { type: 'svg', margin: 2 });
+    session.qrSvg = svg;
+    session.qrUrl = url;
     res.type('image/svg+xml').send(svg);
   } catch (e) {
     res.status(500).json({ error: 'QR generation failed' });

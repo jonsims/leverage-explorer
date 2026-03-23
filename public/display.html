@@ -82,6 +82,8 @@
 
 <div id="waitingDisplay" class="waiting">
   <h2>Leverage Point Explorer</h2>
+  <div id="displayQR" style="width:240px;height:240px;margin:20px auto;"></div>
+  <p id="displayQRUrl" style="font-size:1.1rem;opacity:0.5;margin-top:8px;"></p>
   <p>Scan the QR code to participate</p>
 </div>
 
@@ -209,6 +211,11 @@ async function poll() {
     const state = await fetch('/api/state').then(r => r.json());
 
     if (state.phase !== currentPhase) showPhase(state.phase);
+
+    if (state.qrSvg) {
+      document.getElementById('displayQR').innerHTML = state.qrSvg;
+      document.getElementById('displayQRUrl').textContent = state.qrUrl || '';
+    }
 
     if (state.phase === 'classify') {
       updateClassifyBars(state.classificationTotals);

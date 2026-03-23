@@ -95,6 +95,7 @@
 
 <div id="waitingScreen" class="waiting-screen">
   <h2>Stand By</h2>
+  <div id="studentQR" style="width:180px;height:180px;margin:16px auto;"></div>
   <p>The instructor will activate the next phase shortly.</p>
 </div>
 
@@ -257,6 +258,7 @@ async function poll() {
   try {
     const state = await fetch('/api/state').then(r => r.json());
     if (state.phase !== currentPhase) showPhase(state.phase);
+    if (state.qrSvg) document.getElementById('studentQR').innerHTML = state.qrSvg;
   } catch (e) { /* retry next cycle */ }
   setTimeout(poll, 2000);
 }
