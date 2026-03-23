@@ -13,8 +13,10 @@
   .display-header .phase-label { font-size: 1.1rem; opacity: 0.7; margin-top: 4px; }
 
   /* Waiting */
-  .waiting { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; }
+  .waiting { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; overflow: hidden; }
   .waiting h2 { font-size: 3rem; color: #74c69d; }
+  .qr-box { width: min(220px, 30vh); height: min(220px, 30vh); margin: 0 auto; }
+  .qr-box svg { width: 100%; height: 100%; }
   .waiting p { font-size: 1.5rem; opacity: 0.6; margin-top: 12px; }
 
   /* Classification display */
@@ -85,7 +87,7 @@
 
 <div id="waitingDisplay" class="waiting">
   <p style="font-size:1.3rem;opacity:0.7;margin-bottom:12px;">Scan to join:</p>
-  <div id="displayQR" style="width:220px;height:220px;margin:0 auto;"></div>
+  <div id="displayQR" class="qr-box"></div>
   <p id="displayQRUrl" style="font-size:1rem;opacity:0.4;margin-top:10px;"></p>
 </div>
 
