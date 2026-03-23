@@ -15,9 +15,8 @@
   .pin-error { color: #dc3545; font-size: 14px; margin-top: 8px; display: none; }
 
   .admin-panel { display: none; max-width: 960px; margin: 0 auto; padding: 16px; }
-
   h1 { font-size: 20px; color: #2d6a4f; }
-  h2 { font-size: 14px; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  h2 { font-size: 13px; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
   .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .top-bar .stat { font-size: 14px; color: #666; }
@@ -25,7 +24,6 @@
 
   .section { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
-  /* Compact two-column layout */
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 700px) { .row { grid-template-columns: 1fr; } }
 
@@ -33,14 +31,12 @@
   .workflow-steps b { color: #333; }
 
   .phase-controls { display: flex; gap: 6px; flex-wrap: wrap; }
-  .phase-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .phase-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
   .phase-btn.active { background: #2d6a4f; color: white; border-color: #2d6a4f; }
   .phase-btn:hover { border-color: #2d6a4f; }
-  .phase-btn.flash { animation: flash 0.3s; }
-  @keyframes flash { 50% { opacity: 0.5; } }
 
-  .chain-select { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chain-btn { border: 1px solid #ddd; background: white; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .chain-select { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .chain-btn { border: 1px solid #ddd; background: white; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
   .chain-btn.active { background: #e8f5e9; border-color: #2d6a4f; font-weight: 600; }
 
   .qr-row { display: flex; gap: 12px; align-items: flex-start; }
@@ -57,11 +53,12 @@
   .show-btn { background: #2d6a4f; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; }
   .show-btn.showing { background: #e85d04; }
 
-  .preview-frame { width: 100%; height: 160px; border: 1px solid #ddd; border-radius: 6px; }
+  .preview-frame { width: 100%; height: 180px; border: 1px solid #ddd; border-radius: 6px; }
 
-  .danger-row { display: flex; align-items: center; gap: 12px; }
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .danger-btn { background: #dc3545; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
-  .danger-note { font-size: 12px; color: #999; }
+  .test-btn { background: #6c757d; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+  .btn-note { font-size: 12px; color: #999; }
 
   .hidden { display: none !important; }
 </style>
@@ -82,40 +79,39 @@
   </div>
 
   <div class="workflow-steps">
-    <b>Workflow:</b> Generate QR → students scan → click <b>Classify</b> → debrief bars on projector → click <b>Chains</b> → select chain to display → students submit → click <b>Discussion</b> → show student submissions
+    <b>Workflow:</b> QR → <b>Food</b> (classify food interventions) → debrief → <b>Data</b> (classify data interventions) → debrief → <b>Chains</b> (select chain, students follow along & submit) → <b>Discussion</b> (show submissions)
   </div>
 
   <div class="row">
-    <!-- Left column -->
     <div>
       <div class="section">
         <h2>Phase Control</h2>
         <div class="phase-controls">
           <button class="phase-btn" data-phase="waiting" onclick="setPhase('waiting')">Waiting</button>
-          <button class="phase-btn" data-phase="classify" onclick="setPhase('classify')">Classify</button>
+          <button class="phase-btn" data-phase="classify-food" onclick="setPhase('classify-food')">Food</button>
+          <button class="phase-btn" data-phase="classify-data" onclick="setPhase('classify-data')">Data</button>
           <button class="phase-btn" data-phase="chains" onclick="setPhase('chains')">Chains</button>
           <button class="phase-btn" data-phase="discuss" onclick="setPhase('discuss')">Discussion</button>
         </div>
       </div>
 
       <div class="section">
-        <h2>QR Code for Students</h2>
+        <h2>QR Code</h2>
         <div class="qr-row">
           <div class="qr-controls">
             <input type="text" class="qr-input" id="qrUrlInput" placeholder="Student URL">
-            <button class="phase-btn" onclick="generateQR()" style="font-size:12px;padding:5px 10px;">Regenerate QR</button>
+            <button class="phase-btn" onclick="generateQR()" style="font-size:11px;padding:4px 8px;">Regenerate</button>
           </div>
           <div class="qr-preview" id="qrContainer"></div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Chain Selector <span style="font-size:11px;color:#999;text-transform:none;letter-spacing:0;">(use during Chains phase)</span></h2>
+        <h2>Chain Selector <span style="font-size:11px;color:#999;text-transform:none;letter-spacing:0;">(students see what you select)</span></h2>
         <div class="chain-select" id="chainButtons"></div>
       </div>
     </div>
 
-    <!-- Right column -->
     <div>
       <div class="section">
         <h2>Projector Preview</h2>
@@ -130,9 +126,10 @@
   </div>
 
   <div class="section">
-    <div class="danger-row">
+    <div class="btn-row">
       <button class="danger-btn" onclick="resetSession()">Reset All Data</button>
-      <span class="danger-note">Clears all student votes and submissions. Cannot be undone.</span>
+      <button class="test-btn" onclick="loadDummy()">Load Test Data (44 students)</button>
+      <span class="btn-note">Reset clears everything. Test data simulates a full class.</span>
     </div>
   </div>
 </div>
@@ -144,26 +141,17 @@ let currentPhase = '';
 async function authenticate() {
   PIN = document.getElementById('pinInput').value;
   try {
-    const res = await fetch('/api/admin/verify', {
-      headers: { 'x-admin-pin': PIN },
-    });
-    if (!res.ok) {
-      document.getElementById('pinError').style.display = 'block';
-      return;
-    }
+    const res = await fetch('/api/admin/verify', { headers: { 'x-admin-pin': PIN } });
+    if (!res.ok) { document.getElementById('pinError').style.display = 'block'; return; }
     document.getElementById('pinGate').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     loadChainButtons();
     autoGenerateQR();
     poll();
-  } catch (e) {
-    document.getElementById('pinError').style.display = 'block';
-  }
+  } catch (e) { document.getElementById('pinError').style.display = 'block'; }
 }
 
-document.getElementById('pinInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') authenticate();
-});
+document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key === 'Enter') authenticate(); });
 
 function adminFetch(url, opts = {}) {
   opts.headers = { ...opts.headers, 'x-admin-pin': PIN, 'Content-Type': 'application/json' };
@@ -173,10 +161,7 @@ function adminFetch(url, opts = {}) {
 async function setPhase(phase) {
   const res = await adminFetch('/api/admin/phase', { method: 'POST', body: JSON.stringify({ phase }) });
   if (res.ok) {
-    document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.phase === phase);
-      if (btn.dataset.phase === phase) { btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 300); }
-    });
+    document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => btn.classList.toggle('active', btn.dataset.phase === phase));
   }
 }
 
@@ -188,17 +173,11 @@ function loadChainButtons() {
   });
 }
 
-async function selectChain(id) {
-  await adminFetch('/api/admin/active-chain', { method: 'POST', body: JSON.stringify({ chainId: id }) });
-}
-
-async function highlightSubmission(index) {
-  await adminFetch('/api/admin/highlight', { method: 'POST', body: JSON.stringify({ index }) });
-}
+async function selectChain(id) { await adminFetch('/api/admin/active-chain', { method: 'POST', body: JSON.stringify({ chainId: id }) }); }
+async function highlightSubmission(index) { await adminFetch('/api/admin/highlight', { method: 'POST', body: JSON.stringify({ index }) }); }
 
 function autoGenerateQR() {
-  const studentUrl = window.location.origin + '/';
-  document.getElementById('qrUrlInput').value = studentUrl;
+  document.getElementById('qrUrlInput').value = window.location.origin + '/';
   generateQR();
 }
 
@@ -214,20 +193,20 @@ async function resetSession() {
   await adminFetch('/api/admin/reset', { method: 'POST', body: JSON.stringify({ confirm: true }) });
 }
 
+async function loadDummy() {
+  if (!confirm('Load test data for 44 simulated students? This replaces current data.')) return;
+  const res = await adminFetch('/api/admin/load-dummy', { method: 'POST' });
+  const data = await res.json();
+  alert(`Loaded: ${data.voters} voters, ${data.submissions} submissions`);
+}
+
 async function poll() {
   try {
     const state = await fetch('/api/state').then(r => r.json());
-
-    document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.phase === state.phase);
-    });
+    document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => btn.classList.toggle('active', btn.dataset.phase === state.phase));
     currentPhase = state.phase;
-
     document.getElementById('voterCount').textContent = state.voterCount;
-
-    document.querySelectorAll('.chain-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.chain === state.activeChain);
-    });
+    document.querySelectorAll('.chain-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.chain === state.activeChain));
 
     if (state.chainSubmissions.length > 0) {
       document.getElementById('submissionsList').innerHTML = state.chainSubmissions.map((s, i) => `
@@ -246,11 +225,7 @@ async function poll() {
   setTimeout(poll, 2000);
 }
 
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 </script>
 </body>
 </html>

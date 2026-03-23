@@ -36,7 +36,6 @@ const CHAINS = [
     id: "kennedy",
     title: "Kennedy Moon Landing",
     subtitle: "Deep → Shallow: A moonshot cascades through every realm",
-    direction: "deep-to-shallow",
     steps: [
       { text: "Kennedy declares 'man on the moon before the decade is out'", realm: "Intent", detail: "A goal-level intervention — redefining what the nation's space program is FOR" },
       { text: "NASA reorganizes entirely around the lunar mission", realm: "Design", detail: "Institutional restructuring — new divisions, new decision-making processes, new incentive structures" },
@@ -48,7 +47,6 @@ const CHAINS = [
     id: "strawberry",
     title: "Strawberry Cold Chain",
     subtitle: "Shallow → Deep: A measurement tool triggers a chain to system goals",
-    direction: "shallow-to-deep",
     steps: [
       { text: "Electronic thermometers inserted in strawberry pallets", realm: "Parameters", detail: "A simple measurement device — cheap, easy to deploy, no one objects" },
       { text: "Data reveals systemic temperature failures at every handoff", realm: "Feedbacks", detail: "The data makes the invisible visible — failures aren't random, they're structural" },
@@ -60,7 +58,6 @@ const CHAINS = [
     id: "ozone",
     title: "Ozone / Montreal Protocol",
     subtitle: "Making a problem visible enabled a rule that changed a paradigm",
-    direction: "shallow-to-deep",
     steps: [
       { text: "Scientists monitor and document ozone layer depletion", realm: "Feedbacks", detail: "Satellite data and atmospheric measurements make an invisible crisis visible to the world" },
       { text: "Montreal Protocol bans CFC production and use", realm: "Design", detail: "International agreement — 197 countries agree to phase out ozone-depleting substances" },
@@ -71,7 +68,6 @@ const CHAINS = [
     id: "smoking",
     title: "Smoking Public Health",
     subtitle: "Information → Regulation → Culture change",
-    direction: "shallow-to-deep",
     steps: [
       { text: "Surgeon General's report and warning labels on cigarettes", realm: "Feedbacks", detail: "Information flow — making health risks visible to consumers for the first time" },
       { text: "Advertising bans and indoor smoking laws enacted", realm: "Design", detail: "Rule changes — restricting where and how tobacco can be marketed and consumed" },
@@ -81,6 +77,7 @@ const CHAINS = [
 ];
 
 const REALMS = ["Parameters", "Feedbacks", "Design", "Intent"];
+const VALID_PHASES = ['waiting', 'classify-food', 'classify-data', 'chains', 'discuss'];
 
 // ─── Session state ──────────────────────────────────────────────────────────
 
@@ -135,7 +132,6 @@ app.get('/api/state', (req, res) => {
     displayHighlight: session.displayHighlight,
   };
 
-  // Only include QR data during waiting phase to reduce payload
   if (session.phase === 'waiting' && session.qrSvg) {
     response.qrSvg = session.qrSvg;
     response.qrUrl = session.qrUrl;
@@ -161,7 +157,6 @@ app.post('/api/chain-submit', (req, res) => {
   if (!visitorId || !text || text.length > 1000) {
     return res.status(400).json({ error: 'Invalid submission' });
   }
-  // Dedup: one submission per visitorId
   const existing = session.chainSubmissions.findIndex(s => s.visitorId === visitorId);
   if (existing !== -1) {
     session.chainSubmissions[existing] = {
@@ -183,14 +178,13 @@ app.post('/api/chain-submit', (req, res) => {
 
 // ─── Admin API ──────────────────────────────────────────────────────────────
 
-// PIN verification without side effects
 app.get('/api/admin/verify', requirePin, (req, res) => {
   res.json({ ok: true, phase: session.phase });
 });
 
 app.post('/api/admin/phase', requirePin, (req, res) => {
   const { phase } = req.body;
-  if (!['waiting', 'classify', 'chains', 'discuss'].includes(phase)) {
+  if (!VALID_PHASES.includes(phase)) {
     return res.status(400).json({ error: 'Invalid phase' });
   }
   session.phase = phase;
@@ -237,6 +231,69 @@ app.get('/api/admin/qr', requirePin, async (req, res) => {
   }
 });
 
+// ─── Dummy data ─────────────────────────────────────────────────────────────
+
+app.post('/api/admin/load-dummy', requirePin, (req, res) => {
+  const teams = ['Produce', 'Protein', 'TVs', 'EVs', 'AI', 'Streaming'];
+  const realmWeights = {
+    1:  { Parameters: 30, Feedbacks: 8, Design: 4, Intent: 2 },
+    2:  { Parameters: 20, Feedbacks: 12, Design: 8, Intent: 4 },
+    3:  { Parameters: 4, Feedbacks: 6, Design: 28, Intent: 6 },
+    4:  { Parameters: 3, Feedbacks: 5, Design: 25, Intent: 11 },
+    5:  { Parameters: 10, Feedbacks: 4, Design: 18, Intent: 12 },
+    6:  { Parameters: 2, Feedbacks: 3, Design: 8, Intent: 31 },
+    7:  { Parameters: 32, Feedbacks: 6, Design: 3, Intent: 3 },
+    8:  { Parameters: 5, Feedbacks: 18, Design: 16, Intent: 5 },
+    9:  { Parameters: 8, Feedbacks: 4, Design: 22, Intent: 10 },
+    10: { Parameters: 2, Feedbacks: 3, Design: 20, Intent: 19 },
+    11: { Parameters: 3, Feedbacks: 4, Design: 28, Intent: 9 },
+    12: { Parameters: 6, Feedbacks: 14, Design: 18, Intent: 6 },
+  };
+
+  function weightedPick(weights) {
+    const total = Object.values(weights).reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (const [realm, w] of Object.entries(weights)) {
+      r -= w;
+      if (r <= 0) return realm;
+    }
+    return 'Parameters';
+  }
+
+  session.classifications = {};
+  for (let i = 0; i < 44; i++) {
+    const vid = `dummy_${i}`;
+    session.classifications[vid] = {};
+    for (const intervention of INTERVENTIONS) {
+      session.classifications[vid][intervention.id] = weightedPick(realmWeights[intervention.id]);
+    }
+  }
+
+  const chainTexts = [
+    { team: 'Produce', text: 'Install GPS temperature trackers on produce trucks (Parameters) → data shows 40% of spoilage happens at warehouse loading docks (Feedbacks) → grocery chains require certified cold-dock procedures (Design) → industry shifts from "cheapest route" to "quality-guaranteed delivery" (Intent)' },
+    { team: 'Produce', text: 'Smart packaging with freshness indicators (Parameters) → consumers see quality data at point of purchase (Feedbacks) → retailers compete on freshness transparency (Design) → food waste reduction becomes a brand differentiator (Intent)' },
+    { team: 'Protein', text: 'Blockchain traceability for meat supply chain (Parameters) → contamination outbreaks traced in hours not weeks (Feedbacks) → FDA mandates real-time tracking for all protein distributors (Design) → consumer trust shifts from brand loyalty to verified safety records (Intent)' },
+    { team: 'Protein', text: 'Automated cold storage monitoring in warehouses (Parameters) → data reveals energy waste from door-open events (Feedbacks) → warehouses adopt airlock entry systems (Design)' },
+    { team: 'TVs', text: 'Require carbon labeling on TV packaging showing shipping emissions (Feedbacks) → consumers start choosing locally assembled models (Design) → manufacturers regionalize assembly to cut labeled emissions (Intent)' },
+    { team: 'TVs', text: 'Standardize TV packaging dimensions to maximize container utilization (Parameters) → shipping costs drop 15% per unit (Feedbacks) → smaller retailers can compete on TV distribution (Design)' },
+    { team: 'EVs', text: 'Battery thermal management sensors during shipping (Parameters) → data shows temperature damage occurs at port storage (Feedbacks) → port authorities build climate-controlled EV battery staging areas (Design) → battery longevity expectations shift from 8 to 12 years (Intent)' },
+    { team: 'EVs', text: 'Standardize EV charging connector types globally (Design) → reduces adapter waste and manufacturing complexity (Parameters) → charging network interoperability increases consumer confidence (Intent)' },
+    { team: 'AI', text: 'Publish real-time PUE and WUE metrics for all data centers (Feedbacks) → communities use data to negotiate water usage limits (Design) → data center industry redefines success as "computation per liter" not "computation per dollar" (Intent)' },
+    { team: 'AI', text: 'Require renewable energy certificates for AI training runs (Design) → cloud providers build dedicated solar/wind capacity (Parameters) → AI development shifts to regions with abundant renewables (Intent)' },
+    { team: 'Streaming', text: 'Edge caching reduces data travel distance by 60% (Parameters) → lower latency makes local CDN nodes viable for smaller providers (Feedbacks) → streaming market becomes less concentrated (Design) → content distribution shifts from centralized to distributed model (Intent)' },
+    { team: 'Streaming', text: 'Adaptive bitrate streaming reduces bandwidth per viewer (Parameters) → total network energy consumption drops (Feedbacks) → ISPs rethink infrastructure investment from capacity to efficiency (Design)' },
+  ];
+
+  session.chainSubmissions = chainTexts.map((ct, i) => ({
+    visitorId: `dummy_chain_${i}`,
+    teamName: ct.team,
+    text: ct.text,
+    timestamp: new Date().toISOString(),
+  }));
+
+  res.json({ ok: true, voters: 44, submissions: session.chainSubmissions.length });
+});
+
 // ─── Error handling ─────────────────────────────────────────────────────────
 
 app.use((err, req, res, next) => {
@@ -246,7 +303,6 @@ app.use((err, req, res, next) => {
 
 process.on('uncaughtException', (err) => {
   console.error('[Uncaught exception]', err.message);
-  // Keep running — in-memory data is too valuable to lose
 });
 
 process.on('unhandledRejection', (err) => {

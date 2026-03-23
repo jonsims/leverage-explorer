@@ -11,7 +11,6 @@
   .header { background: #2d6a4f; color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 10; }
   .header h1 { font-size: 18px; font-weight: 600; }
   .header .phase-label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
-
   .conn-warning { background: #fff3cd; color: #856404; text-align: center; padding: 6px; font-size: 12px; display: none; }
 
   .waiting-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 32px; text-align: center; }
@@ -25,16 +24,15 @@
   .realm-legend .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
 
   .classify-container { padding: 12px; }
+  .domain-header { font-size: 15px; font-weight: 700; color: #2d6a4f; margin-bottom: 10px; padding: 8px 12px; background: white; border-radius: 8px; text-align: center; }
+  .domain-header.food { border-left: 4px solid #155724; }
+  .domain-header.data { border-left: 4px solid #004085; }
   .progress-bar { background: #ddd; border-radius: 8px; height: 8px; margin-bottom: 16px; overflow: hidden; }
   .progress-fill { background: #2d6a4f; height: 100%; transition: width 0.3s; border-radius: 8px; }
   .progress-text { font-size: 13px; color: #666; margin-bottom: 8px; text-align: center; }
 
   .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: opacity 0.3s; }
-  .card .domain-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
-  .card .domain-tag.food { background: #d4edda; color: #155724; }
-  .card .domain-tag.data { background: #cce5ff; color: #004085; }
   .card .intervention-text { font-size: 15px; line-height: 1.4; margin-bottom: 12px; }
-
   .realm-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .realm-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 10px 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.2; }
   .realm-btn .realm-hint { display: block; font-size: 10px; font-weight: 400; opacity: 0.7; margin-top: 2px; }
@@ -49,21 +47,14 @@
   .realm-btn[data-realm="Design"].selected { background: #7b2cbf; }
   .realm-btn[data-realm="Intent"] { color: #2d6a4f; }
   .realm-btn[data-realm="Intent"].selected { background: #2d6a4f; }
-
   .card.classified { opacity: 0.5; }
-
   .done-msg { text-align: center; padding: 24px; color: #2d6a4f; font-size: 16px; font-weight: 600; }
 
+  /* Chains */
   .chains-container { padding: 12px; }
-  .chain-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; }
-  .chain-card h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 4px; }
-  .chain-card p { font-size: 13px; color: #666; }
-
-  .chain-viewer { padding: 12px; }
-  .chain-viewer .back-btn { background: none; border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; margin-bottom: 12px; }
+  .chain-viewer { padding: 0; }
   .chain-viewer h2 { font-size: 20px; color: #2d6a4f; margin-bottom: 4px; }
   .chain-viewer .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
-
   .step { background: white; border-radius: 12px; padding: 16px; margin-bottom: 8px; border-left: 4px solid #ccc; }
   .step .realm-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; color: white; }
   .step .realm-badge.Parameters { background: #0077b6; }
@@ -78,6 +69,8 @@
   .step.Design { border-left-color: #7b2cbf; }
   .step.Intent { border-left-color: #2d6a4f; }
 
+  .no-chain-msg { text-align: center; padding: 40px; color: #999; font-size: 16px; }
+
   .submit-section { background: white; border-radius: 12px; padding: 16px; margin-top: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
   .submit-section h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 8px; }
   .submit-section p { font-size: 13px; color: #666; margin-bottom: 12px; }
@@ -86,7 +79,6 @@
   .submit-section textarea { min-height: 80px; resize: vertical; margin-bottom: 8px; }
   .submit-btn { width: 100%; background: #2d6a4f; color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .submit-btn:disabled { background: #999; }
-  .submit-btn:active { opacity: 0.9; }
   .submitted-msg { text-align: center; color: #2d6a4f; font-weight: 600; padding: 12px; }
 
   .hidden { display: none !important; }
@@ -105,25 +97,45 @@
   <p>The instructor will activate the next phase shortly.</p>
 </div>
 
-<div id="classifyScreen" class="classify-container hidden">
+<!-- Classify Food -->
+<div id="classifyFoodScreen" class="classify-container hidden">
+  <div class="domain-header food">Food Cold Chain Interventions</div>
   <div class="realm-legend">
-    <div class="legend-title">Fischer's Four Realms — Which type of change is this?</div>
+    <div class="legend-title">Which type of change is this?</div>
     <div class="legend-grid">
-      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters</b> — physical/technical changes (equipment, numbers)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks</b> — information flows, monitoring, delays</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div><span><b>Design</b> — rules, incentives, who decides</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div><span><b>Intent</b> — goals, paradigms, what the system is FOR</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters</b> — physical/technical</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks</b> — info/monitoring</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div><span><b>Design</b> — rules/incentives</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div><span><b>Intent</b> — goals/paradigms</span></div>
     </div>
   </div>
-  <div class="progress-text" id="progressText">0 of 12 classified</div>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <div id="interventionCards"></div>
-  <div id="doneMsg" class="done-msg hidden">All done! Wait for the instructor to move to the next phase.</div>
+  <div class="progress-text" id="foodProgressText">0 of 6 classified</div>
+  <div class="progress-bar"><div class="progress-fill" id="foodProgressFill"></div></div>
+  <div id="foodCards"></div>
+  <div id="foodDoneMsg" class="done-msg hidden">All done! Wait for the next phase.</div>
 </div>
 
+<!-- Classify Data -->
+<div id="classifyDataScreen" class="classify-container hidden">
+  <div class="domain-header data">Data / Electronics Interventions</div>
+  <div class="realm-legend">
+    <div class="legend-title">Which type of change is this?</div>
+    <div class="legend-grid">
+      <div class="legend-item"><div class="legend-dot" style="background:#0077b6"></div><span><b>Parameters</b> — physical/technical</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e85d04"></div><span><b>Feedbacks</b> — info/monitoring</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7b2cbf"></div><span><b>Design</b> — rules/incentives</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div><span><b>Intent</b> — goals/paradigms</span></div>
+    </div>
+  </div>
+  <div class="progress-text" id="dataProgressText">0 of 6 classified</div>
+  <div class="progress-bar"><div class="progress-fill" id="dataProgressFill"></div></div>
+  <div id="dataCards"></div>
+  <div id="dataDoneMsg" class="done-msg hidden">All done! Wait for the next phase.</div>
+</div>
+
+<!-- Chains (instructor-controlled) -->
 <div id="chainsScreen" class="chains-container hidden">
-  <div id="chainList"></div>
-  <div id="chainViewer" class="chain-viewer hidden"></div>
+  <div id="chainViewer" class="chain-viewer"></div>
   <div id="submitSection" class="submit-section">
     <h3>Your Team's Chain</h3>
     <p id="submitPrompt">Think about your team's product. Can you find a chain in its Distribution & Storage stage where one intervention could unlock another at a different level?</p>
@@ -140,7 +152,6 @@
 </div>
 
 <script>
-// Persist visitor ID across page reloads (iOS Safari, phone sleep, etc.)
 let VISITOR_ID = localStorage.getItem('lpe_visitor_id');
 if (!VISITOR_ID) {
   VISITOR_ID = 'v_' + Math.random().toString(36).slice(2, 10);
@@ -151,6 +162,7 @@ let interventions = [];
 let chains = [];
 let myClassifications = JSON.parse(localStorage.getItem('lpe_classifications') || '{}');
 let currentPhase = 'waiting';
+let currentChainId = null;
 let pollTimer = null;
 let consecutiveErrors = 0;
 
@@ -161,24 +173,27 @@ async function init() {
   ]);
   interventions = iRes;
   chains = cRes;
-  renderClassifyCards();
+  renderCards('food', 'foodCards');
+  renderCards('data', 'dataCards');
   restoreClassifications();
-  renderChainList();
   restoreSubmission();
   startPolling();
 }
 
-function renderClassifyCards() {
-  const container = document.getElementById('interventionCards');
-  container.innerHTML = interventions.map(i => `
+function realmButton(iId, realm, hint) {
+  return `<button class="realm-btn" data-realm="${realm}" onclick="classify(${iId}, '${realm}')">${realm}<span class="realm-hint">${hint}</span></button>`;
+}
+
+function renderCards(domain, containerId) {
+  const items = interventions.filter(i => i.domain === domain);
+  document.getElementById(containerId).innerHTML = items.map(i => `
     <div class="card" id="card-${i.id}">
-      <span class="domain-tag ${i.domain}">${i.domain === 'food' ? 'Food Cold Chain' : 'Data / Electronics'}</span>
       <div class="intervention-text">${i.text}</div>
       <div class="realm-buttons">
-        <button class="realm-btn" data-realm="Parameters" onclick="classify(${i.id}, 'Parameters')">Parameters<span class="realm-hint">physical / technical</span></button>
-        <button class="realm-btn" data-realm="Feedbacks" onclick="classify(${i.id}, 'Feedbacks')">Feedbacks<span class="realm-hint">information / monitoring</span></button>
-        <button class="realm-btn" data-realm="Design" onclick="classify(${i.id}, 'Design')">Design<span class="realm-hint">rules / incentives</span></button>
-        <button class="realm-btn" data-realm="Intent" onclick="classify(${i.id}, 'Intent')">Intent<span class="realm-hint">goals / paradigms</span></button>
+        ${realmButton(i.id, 'Parameters', 'physical / technical')}
+        ${realmButton(i.id, 'Feedbacks', 'information / monitoring')}
+        ${realmButton(i.id, 'Design', 'rules / incentives')}
+        ${realmButton(i.id, 'Intent', 'goals / paradigms')}
       </div>
     </div>
   `).join('');
@@ -188,12 +203,11 @@ function restoreClassifications() {
   for (const [iId, realm] of Object.entries(myClassifications)) {
     const card = document.getElementById(`card-${iId}`);
     if (!card) continue;
-    card.querySelectorAll('.realm-btn').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.realm === realm);
-    });
+    card.querySelectorAll('.realm-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.realm === realm));
     card.classList.add('classified');
   }
-  updateProgress();
+  updateProgress('food');
+  updateProgress('data');
 }
 
 function restoreSubmission() {
@@ -206,36 +220,25 @@ function restoreSubmission() {
   }
 }
 
-function updateProgress() {
-  const done = Object.keys(myClassifications).length;
-  document.getElementById('progressText').textContent = `${done} of ${interventions.length} classified`;
-  document.getElementById('progressFill').style.width = `${(done / interventions.length) * 100}%`;
-  if (done === interventions.length) {
-    document.getElementById('doneMsg').classList.remove('hidden');
-  }
+function updateProgress(domain) {
+  const items = interventions.filter(i => i.domain === domain);
+  const done = items.filter(i => myClassifications[i.id]).length;
+  const prefix = domain === 'food' ? 'food' : 'data';
+  document.getElementById(`${prefix}ProgressText`).textContent = `${done} of ${items.length} classified`;
+  document.getElementById(`${prefix}ProgressFill`).style.width = `${(done / items.length) * 100}%`;
+  if (done === items.length) document.getElementById(`${prefix}DoneMsg`).classList.remove('hidden');
 }
 
-function renderChainList() {
-  const container = document.getElementById('chainList');
-  container.innerHTML = '<p style="font-size:14px;color:#666;margin-bottom:12px;">Tap a case to explore how one intervention unlocked change at a different level:</p>' +
-    chains.map(c => `
-    <div class="chain-card" onclick="viewChain('${c.id}')">
-      <h3>${c.title}</h3>
-      <p>${c.subtitle}</p>
-    </div>
-  `).join('');
-}
-
-function viewChain(id) {
-  const chain = chains.find(c => c.id === id);
-  if (!chain) return;
-  document.getElementById('chainList').classList.add('hidden');
-  document.getElementById('submitSection').classList.add('hidden');
+function renderChain(chainId) {
   const viewer = document.getElementById('chainViewer');
-  viewer.classList.remove('hidden');
+  if (!chainId) {
+    viewer.innerHTML = '<div class="no-chain-msg">Waiting for the instructor to select a chain...</div>';
+    return;
+  }
+  const chain = chains.find(c => c.id === chainId);
+  if (!chain) { viewer.innerHTML = ''; return; }
 
-  let html = `<button class="back-btn" onclick="backToChainList()">← Back to all chains</button>`;
-  html += `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
+  let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
   chain.steps.forEach((step, i) => {
     if (i > 0) html += `<div class="step-arrow">↓</div>`;
     html += `
@@ -243,16 +246,9 @@ function viewChain(id) {
         <span class="realm-badge ${step.realm}">${step.realm}</span>
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
-      </div>
-    `;
+      </div>`;
   });
   viewer.innerHTML = html;
-}
-
-function backToChainList() {
-  document.getElementById('chainList').classList.remove('hidden');
-  document.getElementById('submitSection').classList.remove('hidden');
-  document.getElementById('chainViewer').classList.add('hidden');
 }
 
 let classifyTimeout = null;
@@ -261,26 +257,23 @@ async function classify(interventionId, realm) {
   localStorage.setItem('lpe_classifications', JSON.stringify(myClassifications));
 
   const card = document.getElementById(`card-${interventionId}`);
-  card.querySelectorAll('.realm-btn').forEach(btn => {
-    btn.classList.toggle('selected', btn.dataset.realm === realm);
-  });
+  card.querySelectorAll('.realm-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.realm === realm));
   card.classList.add('classified');
-  updateProgress();
 
-  // Debounce server call (100ms)
+  const domain = interventions.find(i => i.id === interventionId)?.domain;
+  if (domain) updateProgress(domain);
+
   clearTimeout(classifyTimeout);
   classifyTimeout = setTimeout(async () => {
     try {
       const res = await fetch('/api/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visitorId: VISITOR_ID, interventionId, realm }),
       });
-      if (!res.ok) throw new Error('Server error');
+      if (!res.ok) throw new Error();
       document.getElementById('connWarning').style.display = 'none';
     } catch (e) {
       document.getElementById('connWarning').style.display = 'block';
-      // Classification is saved locally — will still show in UI
     }
   }, 100);
 }
@@ -289,12 +282,10 @@ async function submitChain() {
   const text = document.getElementById('chainTextInput').value.trim();
   const teamName = document.getElementById('teamNameInput').value.trim();
   if (!text) return;
-
   document.getElementById('submitChainBtn').disabled = true;
   try {
     await fetch('/api/chain-submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ visitorId: VISITOR_ID, teamName, text }),
     });
     localStorage.setItem('lpe_chain_submitted', '1');
@@ -311,45 +302,38 @@ async function submitChain() {
 
 function showPhase(phase) {
   currentPhase = phase;
-  document.getElementById('waitingScreen').classList.toggle('hidden', phase !== 'waiting');
-  document.getElementById('classifyScreen').classList.toggle('hidden', phase !== 'classify');
-  document.getElementById('chainsScreen').classList.toggle('hidden', phase !== 'chains');
-  document.getElementById('discussScreen').classList.toggle('hidden', phase !== 'discuss');
+  const screens = ['waitingScreen','classifyFoodScreen','classifyDataScreen','chainsScreen','discussScreen'];
+  const map = { waiting: 'waitingScreen', 'classify-food': 'classifyFoodScreen', 'classify-data': 'classifyDataScreen', chains: 'chainsScreen', discuss: 'discussScreen' };
+  screens.forEach(s => document.getElementById(s).classList.add('hidden'));
+  if (map[phase]) document.getElementById(map[phase]).classList.remove('hidden');
 
-  const labels = { waiting: 'Waiting for instructor...', classify: 'Phase 1: Classify Interventions', chains: 'Phase 2: Chains of Leverage', discuss: 'Discussion' };
+  const labels = { waiting: 'Waiting for instructor...', 'classify-food': 'Classify: Food Cold Chain', 'classify-data': 'Classify: Data / Electronics', chains: 'Chains of Leverage', discuss: 'Discussion' };
   document.getElementById('phaseLabel').textContent = labels[phase] || '';
 }
 
 async function poll() {
   try {
     const res = await fetch('/api/state');
-    if (!res.ok) throw new Error('Server error');
+    if (!res.ok) throw new Error();
     const state = await res.json();
     if (state.phase !== currentPhase) showPhase(state.phase);
+    // Update chain view when instructor changes selection
+    if (state.phase === 'chains' && state.activeChain !== currentChainId) {
+      currentChainId = state.activeChain;
+      renderChain(currentChainId);
+    }
     consecutiveErrors = 0;
     document.getElementById('connWarning').style.display = 'none';
   } catch (e) {
     consecutiveErrors++;
-    if (consecutiveErrors >= 3) {
-      document.getElementById('connWarning').style.display = 'block';
-    }
+    if (consecutiveErrors >= 3) document.getElementById('connWarning').style.display = 'block';
   }
   pollTimer = setTimeout(poll, 2000);
 }
 
-function startPolling() {
-  if (pollTimer) clearTimeout(pollTimer);
-  poll();
-}
-
-// Pause polling when phone is locked / tab hidden
+function startPolling() { clearTimeout(pollTimer); poll(); }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    clearTimeout(pollTimer);
-    pollTimer = null;
-  } else {
-    startPolling();
-  }
+  if (document.hidden) { clearTimeout(pollTimer); } else { startPolling(); }
 });
 
 init();
