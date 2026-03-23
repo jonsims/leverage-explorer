@@ -75,15 +75,6 @@
 
   .no-chain-msg { text-align: center; padding: 40px; color: #999; font-size: 16px; }
 
-  .submit-section { background: white; border-radius: 12px; padding: 16px; margin-top: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .submit-section h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 8px; }
-  .submit-section p { font-size: 13px; color: #666; margin-bottom: 12px; }
-  .submit-section input, .submit-section textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; }
-  .submit-section input { margin-bottom: 8px; }
-  .submit-section textarea { min-height: 80px; resize: vertical; margin-bottom: 8px; }
-  .submit-btn { width: 100%; background: #2d6a4f; color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
-  .submit-btn:disabled { background: #999; }
-  .submitted-msg { text-align: center; color: #2d6a4f; font-weight: 600; padding: 12px; }
 
   .hidden { display: none !important; }
 </style>
@@ -140,14 +131,6 @@
 <!-- Chains (instructor-controlled) -->
 <div id="chainsScreen" class="chains-container hidden">
   <div id="chainViewer" class="chain-viewer"></div>
-  <div id="chainSubmitSection" class="submit-section hidden">
-    <h3>Your Team's Chain</h3>
-    <p id="submitPrompt">Think about your team's product. Can you find a chain in its Distribution & Storage stage where one intervention could unlock another at a different level?</p>
-    <input type="text" id="teamNameInput" placeholder="Team name (e.g., Produce, AI, EV...)" maxlength="50">
-    <textarea id="chainTextInput" placeholder="Example: If we installed sensors (Parameters), the data could drive new regulations (Design), which could shift how the whole industry measures success (Intent)..." maxlength="1000"></textarea>
-    <button class="submit-btn" id="submitChainBtn" onclick="submitChain()">Submit Your Chain</button>
-    <div id="submittedMsg" class="submitted-msg hidden">Submitted! Your instructor can see your response.</div>
-  </div>
 </div>
 
 <div id="discussScreen" class="waiting-screen hidden">
@@ -180,7 +163,6 @@ async function init() {
   renderCards('food', 'foodCards');
   renderCards('data', 'dataCards');
   restoreClassifications();
-  restoreSubmission();
   startPolling();
 }
 
@@ -214,16 +196,6 @@ function restoreClassifications() {
   updateProgress('data');
 }
 
-function restoreSubmission() {
-  if (localStorage.getItem('lpe_chain_submitted')) {
-    document.getElementById('submitChainBtn').classList.add('hidden');
-    document.getElementById('chainTextInput').classList.add('hidden');
-    document.getElementById('teamNameInput').classList.add('hidden');
-    document.getElementById('submitPrompt').classList.add('hidden');
-    document.getElementById('submittedMsg').classList.remove('hidden');
-  }
-}
-
 function updateProgress(domain) {
   const items = interventions.filter(i => i.domain === domain);
   const done = items.filter(i => myClassifications[i.id]).length;
@@ -239,7 +211,6 @@ function renderChain(chainId) {
   const viewer = document.getElementById('chainViewer');
   if (!chainId) {
     viewer.innerHTML = '<div class="no-chain-msg">Waiting for the instructor to select a chain...</div>';
-    document.getElementById('chainSubmitSection').classList.add('hidden');
     return;
   }
   const chain = chains.find(c => c.id === chainId);
@@ -262,10 +233,6 @@ function renderChain(chainId) {
   });
   viewer.innerHTML = html;
 
-  // Show submit section after voting
-  if (hasVoted) {
-    document.getElementById('chainSubmitSection').classList.remove('hidden');
-  }
 }
 
 async function voteForStep(chainId, stepIndex) {
@@ -308,28 +275,6 @@ async function classify(interventionId, realm) {
       document.getElementById('connWarning').style.display = 'block';
     }
   }, 100);
-}
-
-async function submitChain() {
-  const text = document.getElementById('chainTextInput').value.trim();
-  const teamName = document.getElementById('teamNameInput').value.trim();
-  if (!text) return;
-  document.getElementById('submitChainBtn').disabled = true;
-  try {
-    await fetch('/api/chain-submit', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitorId: VISITOR_ID, teamName, text }),
-    });
-    localStorage.setItem('lpe_chain_submitted', '1');
-    document.getElementById('submitChainBtn').classList.add('hidden');
-    document.getElementById('chainTextInput').classList.add('hidden');
-    document.getElementById('teamNameInput').classList.add('hidden');
-    document.getElementById('submitPrompt').classList.add('hidden');
-    document.getElementById('submittedMsg').classList.remove('hidden');
-  } catch (e) {
-    document.getElementById('submitChainBtn').disabled = false;
-    document.getElementById('connWarning').style.display = 'block';
-  }
 }
 
 function showPhase(phase) {

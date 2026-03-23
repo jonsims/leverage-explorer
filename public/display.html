@@ -12,10 +12,10 @@
   .display-header h1 { font-size: 2rem; font-weight: 700; }
   .display-header .phase-label { font-size: 1.1rem; opacity: 0.7; }
 
-  .waiting { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; overflow: hidden; }
-  .waiting h2 { font-size: 3rem; color: #74c69d; }
-  .waiting p { font-size: 1.5rem; opacity: 0.6; margin-top: 12px; }
-  .qr-box { width: min(220px, 30vh); height: min(220px, 30vh); margin: 0 auto; }
+  .waiting { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 80px); overflow: hidden; gap: 8px; }
+  .waiting h2 { font-size: 3rem; color: #74c69d; margin: 0; }
+  .waiting p { font-size: 1.5rem; opacity: 0.6; margin: 0; }
+  .qr-box { width: min(200px, 25vh); height: min(200px, 25vh); }
   .qr-box svg { width: 100%; height: 100%; }
 
   /* Classification */
