@@ -9,44 +9,59 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafaf7; color: #333; }
 
   .pin-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+  .pin-gate h1 { margin-bottom: 24px; color: #2d6a4f; }
   .pin-gate input { border: 2px solid #ccc; border-radius: 8px; padding: 12px; font-size: 18px; text-align: center; width: 200px; margin-bottom: 12px; }
   .pin-gate button { background: #2d6a4f; color: white; border: none; border-radius: 8px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
+  .pin-error { color: #dc3545; font-size: 14px; margin-top: 8px; display: none; }
 
-  .admin-panel { display: none; max-width: 900px; margin: 0 auto; padding: 16px; }
+  .admin-panel { display: none; max-width: 960px; margin: 0 auto; padding: 16px; }
 
-  h1 { font-size: 22px; color: #2d6a4f; margin-bottom: 16px; }
-  h2 { font-size: 16px; color: #555; margin-bottom: 8px; margin-top: 20px; }
+  h1 { font-size: 20px; color: #2d6a4f; }
+  h2 { font-size: 14px; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  .section { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .top-bar .stat { font-size: 14px; color: #666; }
+  .top-bar .stat strong { color: #2d6a4f; font-size: 18px; }
 
-  .phase-controls { display: flex; gap: 8px; flex-wrap: wrap; }
-  .phase-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .section { background: white; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  /* Compact two-column layout */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .row { grid-template-columns: 1fr; } }
+
+  .workflow-steps { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 10px; padding: 8px 12px; background: #f0f7f4; border-radius: 6px; border-left: 3px solid #2d6a4f; }
+  .workflow-steps b { color: #333; }
+
+  .phase-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+  .phase-btn { border: 2px solid #ddd; background: white; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
   .phase-btn.active { background: #2d6a4f; color: white; border-color: #2d6a4f; }
   .phase-btn:hover { border-color: #2d6a4f; }
+  .phase-btn.flash { animation: flash 0.3s; }
+  @keyframes flash { 50% { opacity: 0.5; } }
 
-  .stat { font-size: 14px; color: #666; margin-top: 8px; }
-  .stat strong { color: #333; }
+  .chain-select { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chain-btn { border: 1px solid #ddd; background: white; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .chain-btn.active { background: #e8f5e9; border-color: #2d6a4f; font-weight: 600; }
 
-  .chain-select { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  .chain-btn { border: 1px solid #ddd; background: white; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
-  .chain-btn.active { background: #e8f5e9; border-color: #2d6a4f; }
+  .qr-row { display: flex; gap: 12px; align-items: flex-start; }
+  .qr-controls { flex: 1; }
+  .qr-input { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; font-size: 13px; margin-bottom: 6px; }
+  .qr-preview { width: 120px; flex-shrink: 0; }
+  .qr-preview svg { width: 100%; height: auto; }
+  .qr-url { font-size: 11px; color: #999; word-break: break-all; margin-top: 4px; }
 
-  .submission { background: #f9f9f6; border-radius: 8px; padding: 12px; margin-top: 8px; border-left: 3px solid #2d6a4f; }
-  .submission .team { font-weight: 700; color: #2d6a4f; font-size: 14px; }
-  .submission .text { font-size: 14px; margin-top: 4px; line-height: 1.4; }
-  .submission .actions { margin-top: 8px; }
-  .submission .show-btn { background: #2d6a4f; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
-  .submission .show-btn.showing { background: #e85d04; }
+  .submission { background: #f9f9f6; border-radius: 6px; padding: 10px; margin-top: 6px; border-left: 3px solid #2d6a4f; }
+  .submission .team { font-weight: 700; color: #2d6a4f; font-size: 13px; }
+  .submission .text { font-size: 13px; margin-top: 3px; line-height: 1.3; }
+  .submission .actions { margin-top: 6px; }
+  .show-btn { background: #2d6a4f; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; }
+  .show-btn.showing { background: #e85d04; }
 
-  .preview-frame { width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px; }
+  .preview-frame { width: 100%; height: 160px; border: 1px solid #ddd; border-radius: 6px; }
 
-  .qr-container { text-align: center; margin-top: 12px; }
-  .qr-container img { max-width: 200px; }
-  .qr-url { font-size: 13px; color: #666; margin-top: 4px; word-break: break-all; }
-  .qr-input { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; font-size: 14px; margin-bottom: 8px; }
-
-  .danger { border: 2px solid #dc3545; }
-  .danger-btn { background: #dc3545; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+  .danger-row { display: flex; align-items: center; gap: 12px; }
+  .danger-btn { background: #dc3545; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+  .danger-note { font-size: 12px; color: #999; }
 
   .hidden { display: none !important; }
 </style>
@@ -54,51 +69,71 @@
 <body>
 
 <div id="pinGate" class="pin-gate">
-  <h1 style="margin-bottom: 24px; color: #2d6a4f;">Leverage Explorer — Admin</h1>
+  <h1>Leverage Explorer — Admin</h1>
   <input type="password" id="pinInput" placeholder="Enter PIN" autofocus>
   <button onclick="authenticate()">Enter</button>
+  <div class="pin-error" id="pinError">Wrong PIN. Try again.</div>
 </div>
 
 <div id="adminPanel" class="admin-panel">
-  <h1>Leverage Explorer — Admin</h1>
+  <div class="top-bar">
+    <h1>Leverage Explorer</h1>
+    <div class="stat">Participants: <strong id="voterCount">0</strong></div>
+  </div>
 
-  <div class="section">
-    <h2>Phase Control</h2>
-    <div class="phase-controls">
-      <button class="phase-btn" data-phase="waiting" onclick="setPhase('waiting')">Waiting</button>
-      <button class="phase-btn" data-phase="classify" onclick="setPhase('classify')">Phase 1: Classify</button>
-      <button class="phase-btn" data-phase="chains" onclick="setPhase('chains')">Phase 2: Chains</button>
-      <button class="phase-btn" data-phase="discuss" onclick="setPhase('discuss')">Discussion</button>
+  <div class="workflow-steps">
+    <b>Workflow:</b> Generate QR → students scan → click <b>Classify</b> → debrief bars on projector → click <b>Chains</b> → select chain to display → students submit → click <b>Discussion</b> → show student submissions
+  </div>
+
+  <div class="row">
+    <!-- Left column -->
+    <div>
+      <div class="section">
+        <h2>Phase Control</h2>
+        <div class="phase-controls">
+          <button class="phase-btn" data-phase="waiting" onclick="setPhase('waiting')">Waiting</button>
+          <button class="phase-btn" data-phase="classify" onclick="setPhase('classify')">Classify</button>
+          <button class="phase-btn" data-phase="chains" onclick="setPhase('chains')">Chains</button>
+          <button class="phase-btn" data-phase="discuss" onclick="setPhase('discuss')">Discussion</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>QR Code for Students</h2>
+        <div class="qr-row">
+          <div class="qr-controls">
+            <input type="text" class="qr-input" id="qrUrlInput" placeholder="Student URL">
+            <button class="phase-btn" onclick="generateQR()" style="font-size:12px;padding:5px 10px;">Regenerate QR</button>
+          </div>
+          <div class="qr-preview" id="qrContainer"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Chain Selector <span style="font-size:11px;color:#999;text-transform:none;letter-spacing:0;">(use during Chains phase)</span></h2>
+        <div class="chain-select" id="chainButtons"></div>
+      </div>
     </div>
-    <div class="stat" id="voterStat">Participants: <strong>0</strong></div>
+
+    <!-- Right column -->
+    <div>
+      <div class="section">
+        <h2>Projector Preview</h2>
+        <iframe class="preview-frame" id="previewFrame" src="/display"></iframe>
+      </div>
+
+      <div class="section">
+        <h2>Student Submissions</h2>
+        <div id="submissionsList" style="max-height:300px;overflow-y:auto;"><p style="font-size:12px;color:#999;">No submissions yet.</p></div>
+      </div>
+    </div>
   </div>
 
   <div class="section">
-    <h2>QR Code</h2>
-    <input type="text" class="qr-input" id="qrUrlInput" placeholder="Student URL (e.g., https://local.leverage-explorer)">
-    <button class="phase-btn" onclick="generateQR()">Generate QR</button>
-    <div class="qr-container" id="qrContainer"></div>
-  </div>
-
-  <div class="section">
-    <h2>Display Preview</h2>
-    <iframe class="preview-frame" id="previewFrame" src="/display"></iframe>
-  </div>
-
-  <div class="section" id="chainControlSection">
-    <h2>Chain Selector (Phase 2)</h2>
-    <p style="font-size: 13px; color: #666; margin-bottom: 8px;">Select which chain to highlight on the projector display:</p>
-    <div class="chain-select" id="chainButtons"></div>
-  </div>
-
-  <div class="section" id="submissionsSection">
-    <h2>Student Chain Submissions</h2>
-    <div id="submissionsList"><p style="font-size: 13px; color: #999;">No submissions yet.</p></div>
-  </div>
-
-  <div class="section danger">
-    <h2>Danger Zone</h2>
-    <button class="danger-btn" onclick="resetSession()">Reset All Data</button>
+    <div class="danger-row">
+      <button class="danger-btn" onclick="resetSession()">Reset All Data</button>
+      <span class="danger-note">Clears all student votes and submissions. Cannot be undone.</span>
+    </div>
   </div>
 </div>
 
@@ -106,16 +141,26 @@
 let PIN = '';
 let currentPhase = '';
 
-function authenticate() {
+async function authenticate() {
   PIN = document.getElementById('pinInput').value;
-  fetch('/api/state', { headers: { 'x-admin-pin': PIN } })
-    .then(r => {
-      document.getElementById('pinGate').style.display = 'none';
-      document.getElementById('adminPanel').style.display = 'block';
-      loadChainButtons();
-      autoGenerateQR();
-      poll();
+  try {
+    const res = await fetch('/api/admin/phase', {
+      method: 'POST',
+      headers: { 'x-admin-pin': PIN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phase: 'waiting' }),
     });
+    if (!res.ok) {
+      document.getElementById('pinError').style.display = 'block';
+      return;
+    }
+    document.getElementById('pinGate').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadChainButtons();
+    autoGenerateQR();
+    poll();
+  } catch (e) {
+    document.getElementById('pinError').style.display = 'block';
+  }
 }
 
 document.getElementById('pinInput').addEventListener('keydown', e => {
@@ -128,7 +173,13 @@ function adminFetch(url, opts = {}) {
 }
 
 async function setPhase(phase) {
-  await adminFetch('/api/admin/phase', { method: 'POST', body: JSON.stringify({ phase }) });
+  const res = await adminFetch('/api/admin/phase', { method: 'POST', body: JSON.stringify({ phase }) });
+  if (res.ok) {
+    document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.phase === phase);
+      if (btn.dataset.phase === phase) { btn.classList.add('flash'); setTimeout(() => btn.classList.remove('flash'), 300); }
+    });
+  }
 }
 
 function loadChainButtons() {
@@ -157,7 +208,7 @@ async function generateQR() {
   const url = document.getElementById('qrUrlInput').value.trim();
   if (!url) return;
   const svg = await adminFetch(`/api/admin/qr?url=${encodeURIComponent(url)}`).then(r => r.text());
-  document.getElementById('qrContainer').innerHTML = `<div>${svg}</div><div class="qr-url">${url}</div>`;
+  document.getElementById('qrContainer').innerHTML = `${svg}<div class="qr-url">${url}</div>`;
 }
 
 async function resetSession() {
@@ -169,21 +220,17 @@ async function poll() {
   try {
     const state = await fetch('/api/state').then(r => r.json());
 
-    // Update phase buttons
     document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.phase === state.phase);
     });
     currentPhase = state.phase;
 
-    // Voter count
-    document.getElementById('voterStat').innerHTML = `Participants: <strong>${state.voterCount}</strong>`;
+    document.getElementById('voterCount').textContent = state.voterCount;
 
-    // Chain buttons
     document.querySelectorAll('.chain-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.chain === state.activeChain);
     });
 
-    // Submissions
     if (state.chainSubmissions.length > 0) {
       document.getElementById('submissionsList').innerHTML = state.chainSubmissions.map((s, i) => `
         <div class="submission">
@@ -191,13 +238,13 @@ async function poll() {
           <div class="text">${escapeHtml(s.text)}</div>
           <div class="actions">
             <button class="show-btn ${state.displayHighlight === i ? 'showing' : ''}" onclick="highlightSubmission(${state.displayHighlight === i ? 'null' : i})">
-              ${state.displayHighlight === i ? 'Showing on Display' : 'Show on Display'}
+              ${state.displayHighlight === i ? 'On Display' : 'Show'}
             </button>
           </div>
         </div>
       `).join('');
     }
-  } catch (e) { /* retry */ }
+  } catch (e) {}
   setTimeout(poll, 2000);
 }
 
