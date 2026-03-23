@@ -144,10 +144,8 @@ let currentPhase = '';
 async function authenticate() {
   PIN = document.getElementById('pinInput').value;
   try {
-    const res = await fetch('/api/admin/phase', {
-      method: 'POST',
-      headers: { 'x-admin-pin': PIN, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phase: 'waiting' }),
+    const res = await fetch('/api/admin/verify', {
+      headers: { 'x-admin-pin': PIN },
     });
     if (!res.ok) {
       document.getElementById('pinError').style.display = 'block';

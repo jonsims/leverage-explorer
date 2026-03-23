@@ -242,8 +242,17 @@ async function poll() {
       }
     }
   } catch (e) { /* retry */ }
-  setTimeout(poll, 2000);
+  pollTimer = setTimeout(poll, 2000);
 }
+
+let pollTimer = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(pollTimer);
+  } else {
+    poll();
+  }
+});
 
 function escapeHtml(s) {
   const d = document.createElement('div');

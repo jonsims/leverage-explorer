@@ -17,14 +17,12 @@ app.get('/display', (req, res) => res.sendFile(path.join(__dirname, 'public', 'd
 // ─── Data ───────────────────────────────────────────────────────────────────
 
 const INTERVENTIONS = [
-  // Food cold chain
   { id: 1, text: "Install real-time temperature sensors in refrigerated trucks", domain: "food" },
   { id: 2, text: "Train warehouse workers on cold chain protocols", domain: "food" },
   { id: 3, text: "Require cold chain certification for all produce distributors", domain: "food" },
   { id: 4, text: "Penalize distributors financially for temperature exceedances", domain: "food" },
   { id: 5, text: "Redesign supply chains so produce travels less than 200 miles", domain: "food" },
   { id: 6, text: "Change the success metric from 'cost per unit delivered' to 'percent arriving at peak quality'", domain: "food" },
-  // Data / Electronics
   { id: 7, text: "Install more energy-efficient cooling in data centers", domain: "data" },
   { id: 8, text: "Require data centers to disclose water and energy consumption publicly", domain: "data" },
   { id: 9, text: "Site new data centers only adjacent to verified renewable energy sources", domain: "data" },
@@ -87,13 +85,13 @@ const REALMS = ["Parameters", "Feedbacks", "Design", "Intent"];
 // ─── Session state ──────────────────────────────────────────────────────────
 
 let session = {
-  phase: 'waiting',        // waiting | classify | chains | discuss
-  activeChain: null,       // chain id to display
-  classifications: {},     // { visitorId: { interventionId: realm } }
-  chainSubmissions: [],     // [{ visitorId, teamName, text, timestamp }]
-  displayHighlight: null,  // submission index to highlight on display
-  qrSvg: null,            // cached QR SVG for display/student pages
-  qrUrl: null,            // the student URL
+  phase: 'waiting',
+  activeChain: null,
+  classifications: {},
+  chainSubmissions: [],
+  displayHighlight: null,
+  qrSvg: null,
+  qrUrl: null,
 };
 
 // ─── Auth middleware ────────────────────────────────────────────────────────
@@ -127,16 +125,23 @@ app.get('/api/state', (req, res) => {
       }
     }
   }
-  res.json({
+
+  const response = {
     phase: session.phase,
     activeChain: session.activeChain,
     classificationTotals: totals,
     voterCount: Object.keys(session.classifications).length,
     chainSubmissions: session.chainSubmissions,
     displayHighlight: session.displayHighlight,
-    qrSvg: session.qrSvg,
-    qrUrl: session.qrUrl,
-  });
+  };
+
+  // Only include QR data during waiting phase to reduce payload
+  if (session.phase === 'waiting' && session.qrSvg) {
+    response.qrSvg = session.qrSvg;
+    response.qrUrl = session.qrUrl;
+  }
+
+  res.json(response);
 });
 
 app.post('/api/classify', (req, res) => {
@@ -156,6 +161,17 @@ app.post('/api/chain-submit', (req, res) => {
   if (!visitorId || !text || text.length > 1000) {
     return res.status(400).json({ error: 'Invalid submission' });
   }
+  // Dedup: one submission per visitorId
+  const existing = session.chainSubmissions.findIndex(s => s.visitorId === visitorId);
+  if (existing !== -1) {
+    session.chainSubmissions[existing] = {
+      visitorId,
+      teamName: (teamName || 'Anonymous').slice(0, 50),
+      text: text.slice(0, 1000),
+      timestamp: new Date().toISOString(),
+    };
+    return res.json({ ok: true, index: existing, updated: true });
+  }
   session.chainSubmissions.push({
     visitorId,
     teamName: (teamName || 'Anonymous').slice(0, 50),
@@ -166,6 +182,11 @@ app.post('/api/chain-submit', (req, res) => {
 });
 
 // ─── Admin API ──────────────────────────────────────────────────────────────
+
+// PIN verification without side effects
+app.get('/api/admin/verify', requirePin, (req, res) => {
+  res.json({ ok: true, phase: session.phase });
+});
 
 app.post('/api/admin/phase', requirePin, (req, res) => {
   const { phase } = req.body;
@@ -214,6 +235,22 @@ app.get('/api/admin/qr', requirePin, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'QR generation failed' });
   }
+});
+
+// ─── Error handling ─────────────────────────────────────────────────────────
+
+app.use((err, req, res, next) => {
+  console.error('[Express error]', err.message);
+  res.status(500).json({ error: 'Server error' });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught exception]', err.message);
+  // Keep running — in-memory data is too valuable to lose
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('[Unhandled rejection]', err);
 });
 
 // ─── Start ──────────────────────────────────────────────────────────────────

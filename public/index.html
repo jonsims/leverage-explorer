@@ -12,18 +12,18 @@
   .header h1 { font-size: 18px; font-weight: 600; }
   .header .phase-label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
 
+  .conn-warning { background: #fff3cd; color: #856404; text-align: center; padding: 6px; font-size: 12px; display: none; }
+
   .waiting-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 32px; text-align: center; }
   .waiting-screen h2 { font-size: 24px; color: #2d6a4f; margin-bottom: 12px; }
   .waiting-screen p { font-size: 16px; color: #666; }
 
-  /* Realm legend */
   .realm-legend { background: white; border-radius: 10px; padding: 12px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .realm-legend .legend-title { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
   .realm-legend .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .realm-legend .legend-item { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; line-height: 1.3; }
   .realm-legend .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
 
-  /* Classification phase */
   .classify-container { padding: 12px; }
   .progress-bar { background: #ddd; border-radius: 8px; height: 8px; margin-bottom: 16px; overflow: hidden; }
   .progress-fill { background: #2d6a4f; height: 100%; transition: width 0.3s; border-radius: 8px; }
@@ -54,7 +54,6 @@
 
   .done-msg { text-align: center; padding: 24px; color: #2d6a4f; font-size: 16px; font-weight: 600; }
 
-  /* Chains phase */
   .chains-container { padding: 12px; }
   .chain-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; }
   .chain-card h3 { font-size: 16px; color: #2d6a4f; margin-bottom: 4px; }
@@ -99,6 +98,7 @@
   <h1>Leverage Point Explorer</h1>
   <div class="phase-label" id="phaseLabel">Waiting for instructor...</div>
 </div>
+<div class="conn-warning" id="connWarning">Connection lost — retrying...</div>
 
 <div id="waitingScreen" class="waiting-screen">
   <h2>Stand By</h2>
@@ -126,7 +126,7 @@
   <div id="chainViewer" class="chain-viewer hidden"></div>
   <div id="submitSection" class="submit-section">
     <h3>Your Team's Chain</h3>
-    <p>Think about your team's product. Can you find a chain in its Distribution & Storage stage where one intervention could unlock another at a different level?</p>
+    <p id="submitPrompt">Think about your team's product. Can you find a chain in its Distribution & Storage stage where one intervention could unlock another at a different level?</p>
     <input type="text" id="teamNameInput" placeholder="Team name (e.g., Produce, AI, EV...)" maxlength="50">
     <textarea id="chainTextInput" placeholder="Example: If we installed sensors (Parameters), the data could drive new regulations (Design), which could shift how the whole industry measures success (Intent)..." maxlength="1000"></textarea>
     <button class="submit-btn" id="submitChainBtn" onclick="submitChain()">Submit Your Chain</button>
@@ -140,11 +140,19 @@
 </div>
 
 <script>
-const VISITOR_ID = 'v_' + Math.random().toString(36).slice(2, 10);
+// Persist visitor ID across page reloads (iOS Safari, phone sleep, etc.)
+let VISITOR_ID = localStorage.getItem('lpe_visitor_id');
+if (!VISITOR_ID) {
+  VISITOR_ID = 'v_' + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem('lpe_visitor_id', VISITOR_ID);
+}
+
 let interventions = [];
 let chains = [];
-let myClassifications = {};
+let myClassifications = JSON.parse(localStorage.getItem('lpe_classifications') || '{}');
 let currentPhase = 'waiting';
+let pollTimer = null;
+let consecutiveErrors = 0;
 
 async function init() {
   const [iRes, cRes] = await Promise.all([
@@ -154,8 +162,10 @@ async function init() {
   interventions = iRes;
   chains = cRes;
   renderClassifyCards();
+  restoreClassifications();
   renderChainList();
-  poll();
+  restoreSubmission();
+  startPolling();
 }
 
 function renderClassifyCards() {
@@ -172,6 +182,37 @@ function renderClassifyCards() {
       </div>
     </div>
   `).join('');
+}
+
+function restoreClassifications() {
+  for (const [iId, realm] of Object.entries(myClassifications)) {
+    const card = document.getElementById(`card-${iId}`);
+    if (!card) continue;
+    card.querySelectorAll('.realm-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.realm === realm);
+    });
+    card.classList.add('classified');
+  }
+  updateProgress();
+}
+
+function restoreSubmission() {
+  if (localStorage.getItem('lpe_chain_submitted')) {
+    document.getElementById('submitChainBtn').classList.add('hidden');
+    document.getElementById('chainTextInput').classList.add('hidden');
+    document.getElementById('teamNameInput').classList.add('hidden');
+    document.getElementById('submitPrompt').classList.add('hidden');
+    document.getElementById('submittedMsg').classList.remove('hidden');
+  }
+}
+
+function updateProgress() {
+  const done = Object.keys(myClassifications).length;
+  document.getElementById('progressText').textContent = `${done} of ${interventions.length} classified`;
+  document.getElementById('progressFill').style.width = `${(done / interventions.length) * 100}%`;
+  if (done === interventions.length) {
+    document.getElementById('doneMsg').classList.remove('hidden');
+  }
 }
 
 function renderChainList() {
@@ -195,7 +236,6 @@ function viewChain(id) {
 
   let html = `<button class="back-btn" onclick="backToChainList()">← Back to all chains</button>`;
   html += `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
-
   chain.steps.forEach((step, i) => {
     if (i > 0) html += `<div class="step-arrow">↓</div>`;
     html += `
@@ -215,30 +255,34 @@ function backToChainList() {
   document.getElementById('chainViewer').classList.add('hidden');
 }
 
+let classifyTimeout = null;
 async function classify(interventionId, realm) {
   myClassifications[interventionId] = realm;
+  localStorage.setItem('lpe_classifications', JSON.stringify(myClassifications));
 
   const card = document.getElementById(`card-${interventionId}`);
   card.querySelectorAll('.realm-btn').forEach(btn => {
     btn.classList.toggle('selected', btn.dataset.realm === realm);
   });
   card.classList.add('classified');
+  updateProgress();
 
-  const done = Object.keys(myClassifications).length;
-  document.getElementById('progressText').textContent = `${done} of ${interventions.length} classified`;
-  document.getElementById('progressFill').style.width = `${(done / interventions.length) * 100}%`;
-
-  if (done === interventions.length) {
-    document.getElementById('doneMsg').classList.remove('hidden');
-  }
-
-  try {
-    await fetch('/api/classify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visitorId: VISITOR_ID, interventionId, realm }),
-    });
-  } catch (e) {}
+  // Debounce server call (100ms)
+  clearTimeout(classifyTimeout);
+  classifyTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch('/api/classify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitorId: VISITOR_ID, interventionId, realm }),
+      });
+      if (!res.ok) throw new Error('Server error');
+      document.getElementById('connWarning').style.display = 'none';
+    } catch (e) {
+      document.getElementById('connWarning').style.display = 'block';
+      // Classification is saved locally — will still show in UI
+    }
+  }, 100);
 }
 
 async function submitChain() {
@@ -253,13 +297,15 @@ async function submitChain() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ visitorId: VISITOR_ID, teamName, text }),
     });
+    localStorage.setItem('lpe_chain_submitted', '1');
     document.getElementById('submitChainBtn').classList.add('hidden');
     document.getElementById('chainTextInput').classList.add('hidden');
     document.getElementById('teamNameInput').classList.add('hidden');
-    document.querySelector('#submitSection p').classList.add('hidden');
+    document.getElementById('submitPrompt').classList.add('hidden');
     document.getElementById('submittedMsg').classList.remove('hidden');
   } catch (e) {
     document.getElementById('submitChainBtn').disabled = false;
+    document.getElementById('connWarning').style.display = 'block';
   }
 }
 
@@ -276,11 +322,35 @@ function showPhase(phase) {
 
 async function poll() {
   try {
-    const state = await fetch('/api/state').then(r => r.json());
+    const res = await fetch('/api/state');
+    if (!res.ok) throw new Error('Server error');
+    const state = await res.json();
     if (state.phase !== currentPhase) showPhase(state.phase);
-  } catch (e) {}
-  setTimeout(poll, 2000);
+    consecutiveErrors = 0;
+    document.getElementById('connWarning').style.display = 'none';
+  } catch (e) {
+    consecutiveErrors++;
+    if (consecutiveErrors >= 3) {
+      document.getElementById('connWarning').style.display = 'block';
+    }
+  }
+  pollTimer = setTimeout(poll, 2000);
 }
+
+function startPolling() {
+  if (pollTimer) clearTimeout(pollTimer);
+  poll();
+}
+
+// Pause polling when phone is locked / tab hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  } else {
+    startPolling();
+  }
+});
 
 init();
 </script>
