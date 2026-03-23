@@ -20,14 +20,14 @@ const INTERVENTIONS = [
   { id: 1, text: "Install real-time temperature sensors in refrigerated trucks", domain: "food", answer: "Parameters" },
   { id: 2, text: "Train warehouse workers on cold chain protocols", domain: "food", answer: "Feedbacks" },
   { id: 3, text: "Require cold chain certification for all produce distributors", domain: "food", answer: "Design" },
-  { id: 4, text: "Penalize distributors financially for temperature exceedances", domain: "food", answer: "Design" },
+  { id: 4, text: "Penalize distributors financially for temperature exceedances", domain: "food", answer: "Parameters" },
   { id: 5, text: "Redesign supply chains so produce travels less than 200 miles", domain: "food", answer: "Design" },
   { id: 6, text: "Change the success metric from 'cost per unit delivered' to 'percent arriving at peak quality'", domain: "food", answer: "Intent" },
   { id: 7, text: "Install more energy-efficient cooling in data centers", domain: "data", answer: "Parameters" },
-  { id: 8, text: "Require data centers to disclose water and energy consumption publicly", domain: "data", answer: "Feedbacks" },
+  { id: 8, text: "Require data centers to disclose water and energy consumption publicly", domain: "data", answer: "Design" },
   { id: 9, text: "Site new data centers only adjacent to verified renewable energy sources", domain: "data", answer: "Design" },
   { id: 10, text: "Give host communities a formal vote on data center siting decisions", domain: "data", answer: "Design" },
-  { id: 11, text: "End local tax subsidies for data center construction", domain: "data", answer: "Design" },
+  { id: 11, text: "End local tax subsidies for data center construction", domain: "data", answer: "Parameters" },
   { id: 12, text: "Establish a global standard for measuring and reporting data center embodied carbon", domain: "data", answer: "Feedbacks" },
 ];
 
