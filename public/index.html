@@ -241,16 +241,26 @@ function renderChain(chainId) {
   }
 
   let html = `<h2>${chain.title}</h2>`;
-  html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin:8px 0 12px;font-size:13px;line-height:1.4;color:#333;">This chain shows how one intervention led to the next. Read all the steps, then rank them from the one you think has the <b>highest leverage for change</b> to the lowest. Tap in order — first tap = #1.</div>`;
+  html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin:8px 0 12px;font-size:13px;line-height:1.4;color:#333;">These steps all happened in this case. Which one do you think had the <b>highest leverage for change</b>? Rank them all — tap in order, first tap = #1 (highest).</div>`;
   html += `<div class="rank-prompt ${promptClass}">${promptText}</div>`;
   html += `<div class="rank-actions"><button class="reset-btn" onclick="resetRanking('${chainId}')">Start Over</button></div>`;
 
-  chain.steps.forEach((step, i) => {
-    const rankPos = ranking.indexOf(i);
+  // Shuffle steps deterministically by chainId so everyone sees same order
+  const shuffled = chain.steps.map((step, i) => ({ step, origIdx: i }));
+  let seed = 0;
+  for (let c = 0; c < chainId.length; c++) seed += chainId.charCodeAt(c);
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    seed = (seed * 9301 + 49297) % 233280;
+    const j = seed % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  shuffled.forEach(({ step, origIdx }, displayIdx) => {
+    const rankPos = ranking.indexOf(origIdx);
     const isRanked = rankPos !== -1;
-    if (i > 0) html += `<div class="step-arrow">↓</div>`;
+    if (displayIdx > 0) html += `<div style="height:8px;"></div>`;
     html += `
-      <div class="step ${isRanked ? 'ranked' : ''}" onclick="rankStep('${chainId}', ${i})">
+      <div class="step ${isRanked ? 'ranked' : ''}" onclick="rankStep('${chainId}', ${origIdx})">
         <div class="rank-number">${isRanked ? rankPos + 1 : ''}</div>
         <div class="step-text">${step.text}</div>
         <div class="step-detail">${step.detail}</div>
