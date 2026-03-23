@@ -233,7 +233,7 @@ function renderChain(chainId) {
     promptText = 'Ranking submitted! Tap "Start Over" to change.';
     promptClass = 'done';
   } else if (ranking.length === 0) {
-    promptText = 'Rank these steps: tap the HIGHEST leverage point first, then second, etc.';
+    promptText = 'Rank these steps: tap the SHALLOWEST first, then next, down to the DEEPEST.';
     promptClass = '';
   } else {
     promptText = `Tap #${nextRank} — ${nextRank === chain.steps.length ? 'last one!' : (chain.steps.length - ranking.length) + ' remaining'}`;
@@ -241,7 +241,7 @@ function renderChain(chainId) {
   }
 
   let html = `<h2>${chain.title}</h2>`;
-  html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin:8px 0 12px;font-size:13px;line-height:1.4;color:#333;">These steps all happened in this case. Which one do you think had the <b>highest leverage for change</b>? Rank them all — tap in order, first tap = #1 (highest).</div>`;
+  html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin:8px 0 12px;font-size:13px;line-height:1.4;color:#333;">These steps all happened in this case. Rank them from <b>shallowest</b> (closest to the surface) to <b>deepest</b> (most fundamental change). Tap in order — first tap = shallowest.</div>`;
   html += `<div class="rank-prompt ${promptClass}">${promptText}</div>`;
   html += `<div class="rank-actions"><button class="reset-btn" onclick="resetRanking('${chainId}')">Start Over</button></div>`;
 
