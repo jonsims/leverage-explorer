@@ -97,6 +97,9 @@
 <!-- Classify Food -->
 <div id="classifyFoodScreen" class="classify-container hidden">
   <div class="domain-header food">Food Cold Chain Interventions</div>
+  <div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.4;color:#333;">
+    Read each intervention below. Decide which of the four realms it belongs to and tap your choice. There are no wrong answers — we'll discuss as a class.
+  </div>
   <div class="realm-legend">
     <div class="legend-title">Which type of change is this?</div>
     <div class="legend-grid">
@@ -115,6 +118,9 @@
 <!-- Classify Data -->
 <div id="classifyDataScreen" class="classify-container hidden">
   <div class="domain-header data">Data / Electronics Interventions</div>
+  <div style="background:#e3f2fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.4;color:#333;">
+    Same exercise, new domain. Classify each data center or electronics intervention into the realm you think fits best.
+  </div>
   <div class="realm-legend">
     <div class="legend-title">Which type of change is this?</div>
     <div class="legend-grid">
@@ -234,7 +240,8 @@ function renderChain(chainId) {
     promptClass = '';
   }
 
-  let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
+  let html = `<h2>${chain.title}</h2>`;
+  html += `<div style="background:#fff8e1;border-radius:8px;padding:10px 14px;margin:8px 0 12px;font-size:13px;line-height:1.4;color:#333;">This chain shows how one intervention led to the next. Read all the steps, then rank them from the one you think has the <b>highest leverage for change</b> to the lowest. Tap in order — first tap = #1.</div>`;
   html += `<div class="rank-prompt ${promptClass}">${promptText}</div>`;
   html += `<div class="rank-actions"><button class="reset-btn" onclick="resetRanking('${chainId}')">Start Over</button></div>`;
 
