@@ -194,7 +194,8 @@ function showChain(chainId, rankAverages, rankCount, revealed) {
   const numSteps = chain.steps.length;
   const topStep = Object.entries(rankAverages || {}).reduce((best, [idx, avg]) => (avg > 0 && avg < best.avg) ? { idx: +idx, avg } : best, { idx: -1, avg: numSteps + 1 }).idx;
 
-  let html = `<h2>${chain.title}</h2><div class="subtitle">${chain.subtitle}</div>`;
+  let html = `<h2>${chain.title}</h2>`;
+  if (revealed) html += `<div class="subtitle">${chain.subtitle}</div>`;
   if (!revealed && rankCount > 0) {
     html += `<div class="vote-header">${rankCount} ranking${rankCount !== 1 ? 's' : ''} submitted</div>`;
   } else if (revealed && rankCount > 0) {
@@ -259,7 +260,8 @@ async function poll() {
     }
     if (state.phase === 'chains') {
       showChain(state.activeChain, state.chainRankAverages, state.chainRankCount, state.chainRevealed);
-      if (state.displayHighlight !== null && state.chainSubmissions[state.displayHighlight]) {
+      // Only show highlighted submissions after reveal
+      if (state.chainRevealed && state.displayHighlight !== null && state.chainSubmissions[state.displayHighlight]) {
         showHighlight(state.chainSubmissions[state.displayHighlight]);
       } else { showHighlight(null); }
     }
